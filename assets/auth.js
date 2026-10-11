@@ -27,7 +27,7 @@
         return;
       }
       try {
-        const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+        const { createClient } = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/+esm");
         client = createClient(config.supabaseUrl, config.supabasePublishableKey, {
           auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
         });
