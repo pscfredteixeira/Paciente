@@ -130,10 +130,10 @@ const agenda={
      if(dbError||!data?.match_value)throw Error("Falha ao salvar regra de vinculação.");
      rules.set(key,patientId);
      const conflict=links.has(eventId)&&links.get(eventId)!==patientId;
-     return {ok:true,message:selector.kind==="series"?
+     const message=selector.kind==="series"?
        "Série vinculada! As ocorrências anteriores e futuras desta série serão reconhecidas. Nenhuma cobrança foi criada.":
-       "Regra salva! Eventos anteriores e futuros com o título exatamente igual serão reconhecidos. Nenhuma cobrança foi criada."
-       +(conflict?" A sessão atual tem uma associação individual diferente que continua valendo.":"")};
+       "Regra salva! Eventos anteriores e futuros com o título exatamente igual serão reconhecidos. Nenhuma cobrança foi criada.";
+     return {ok:true,message:message+(conflict?" Esta sessão tem uma associação individual diferente que continua valendo.":"")};
    }catch(_){return {ok:false,message:"Não foi possível salvar a vinculação automática. Tente novamente."};}
    finally{saving=false;notify();}
  },
