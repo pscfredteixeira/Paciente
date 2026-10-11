@@ -1,47 +1,48 @@
-# Meu Consultório — Sprint 4
+# Meu Consultório — Sprint 4 (login privado)
 
-Aplicativo web pessoal para acompanhar sessões e pagamentos. **Versão atual: protótipo navegável com dados inteiramente fictícios.**
+Aplicativo web pessoal para acompanhar sessões e pagamentos. **O login está ativado, mas os dados exibidos ainda são inteiramente fictícios.** O aplicativo não contém prontuários ou contas de pacientes reais.
 
-**Abrir demonstração:** https://pscfredteixeira.github.io/Paciente/
+**Acessar:** https://pscfredteixeira.github.io/Paciente/
 
-## O que dá para testar agora
+## Situação atual
 
-- Início: resumo das sessões e das pendências.
-- Agenda: abrir eventos, vincular paciente de exemplo, confirmar sessão e registrar faltas/cancelamentos.
-- Pacientes: extrato, valores de sessão e histórico ilustrativo.
-- Financeiro: demonstrar débitos, recebimentos parciais e revisão antes de confirmar.
-- Relatórios e Ajustes: visualização administrativa e prévia da tela de acesso.
-- Navegação responsiva para celular e desktop; identidade visual roxa/laranja, títulos sem serifa em negrito.
+- Uma conta cadastrada e confirmada no Supabase Auth, autorizada exclusivamente na tabela `app_access`.
+- Login com e-mail e senha conectado ao Supabase (cliente JavaScript com versão fixada).
+- RLS testado: identidade autorizada pode consultar a própria permissão; outra identidade não pode; usuário anônimo sem leitura.
+- O site está em `mode: "private"`. Os arquivos estáticos do GitHub Pages continuam públicos.
+- Agenda, pacientes, sessões, débitos, recebimentos e relatórios **apenas simulados**. Recarregar a página reinicia os dados.
+- **Pendente:** testar login real no navegador com as credenciais do proprietário e ativar proteção contra senhas vazadas no painel Supabase.
 
-## Estrutura do código
+## Estrutura
 
 ```text
 index.html
-assets/styles.css
-assets/app.js
-docs/ARQUITETURA.md
+assets/
+  styles.css
+  app.js
+  auth.js
+  config.js             # contém apenas URL e chave publishable
+supabase/
+  migrations/
+    20261011_01_access.sql
+docs/
+  ARQUITETURA.md
+  SPRINT_04_ACESSO.md
 .gitignore
 ```
 
-Para rodar localmente, use um servidor estático na pasta do repositório, como `python -m http.server 8000`, e abra `http://localhost:8000`.
+Os títulos são grossos e sem serifa, a interface é roxa com destaques em laranja, responsiva para celular e desktop.
 
-## Segurança — leia antes de usar
+## Segurança
 
-**O repositório e a interface de demonstração são públicos.** Não há login real ou banco de dados. Nenhuma ação realizada no protótipo movimenta dinheiro ou acessa Google Calendar; todas as mudanças temporárias desaparecem ao recarregar.
+**Não coloque dados reais de pacientes em `assets/app.js`, no código público nem em arquivos estáticos do GitHub Pages.** Mesmo com tela de login, qualquer pessoa pode obter os arquivos públicos. Somente o backend e as políticas de acesso ao banco poderão proteger informações reais em sprints posteriores.
 
-**Nunca digite ou versiona informações reais de pacientes, credenciais, chaves ou tokens neste protótipo.** A versão funcional só aceitará informações reais depois de autenticação exclusiva, autorização no backend e banco com regras de acesso verificadas. O **código de login do Sprint 4 já existe**, mas ele permanece desativado até um projeto Supabase ser configurado. O arquivo `.gitignore` é uma camada auxiliar, não substitui esses controles.
+A URL do Supabase e a chave `sb_publishable_` são públicas por definição; senhas, service_role, secret key e tokens administrativos **não devem estar no repositório**.
 
-Leia [arquitetura, fluxo financeiro e requisitos de segurança](./docs/ARQUITETURA.md).
+O Supabase apontou um aviso: **Leaked Password Protection Disabled**. Consulte [o guia do Sprint 4](./docs/SPRINT_04_ACESSO.md) para ativar essa proteção, revisar inscrições abertas e configurar MFA.
 
-## Sprint 4 — implementação preparada, ainda desativada
+Nenhum pagamento real é processado; Google Calendar, Pix, conciliação bancária, backup e armazenamento definitivo de pacientes ainda não estão conectados.
 
-- `assets/config.js`: modo `demo` por padrão; ativa autenticação somente quando configurado conscientemente.
-- `assets/auth.js`: login email/senha no Supabase com verificação de permissão `app_access` no banco.
-- `supabase/migrations/20261011_01_access.sql`: tabela de permissões com RLS e sem políticas de gravação pelo navegador.
-- `docs/SPRINT_04_ACESSO.md`: procedimento de ativação e testes.
+## Próxima etapa
 
-**Projeto Supabase criado em 11/10/2026:** [Meu Consultório](https://supabase.com/dashboard/project/tcwbzfsmkhuekvxrbigf), região São Paulo. A migration de autorização `sprint_04_access_control` foi executada e verificada: RLS ativo; sem leitura anônima e sem criação de permissões pelo cliente. **Ainda não há usuários cadastrados ou autorizados.** O site mantém `mode: "demo"`, utiliza apenas dados fictícios e permanece público. Para ativar o login, seguir [o guia do Sprint 4](./docs/SPRINT_04_ACESSO.md).
-
-## Próximas etapas
-
-Criar sua conta privada no Supabase Auth, autorizar essa conta no banco e testar o login com segurança antes de mudar o site para modo privado. Depois, preparar o cadastro persistente no Sprint 5. Google Calendar e integrações financeiras vêm depois.
+Validar o login pessoal e as configurações de segurança. O Sprint 5 criará cadastro persistente de pacientes com RLS antes da importação de qualquer informação real.
