@@ -23,7 +23,7 @@ const navs=[['home','home','Início'],['agenda','calendar','Agenda'],['patients'
 function openView(v){view=v;selectedPatient=null;modal=null;query='';filter='all';render();window.scrollTo({top:0,behavior:'instant'});}
 const $=selector=>document.querySelector(selector);
 function showToast(t){let node=$('#toast');if(node)node.remove();node=document.createElement('div');node.className='toast';node.id='toast';node.setAttribute('role','status');node.textContent=t;document.body.appendChild(node);clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.remove(),3500)}
-function shell(page){return `<div class="shell"><aside class="side"><div class="brand"><span class="brand-mark">${I('layers')}</span><div><div class="brand-title">Meu Consultório</div><div class="brand-caption">Gestão particular</div></div></div><div class="nav-label">Espaço de trabalho</div><nav class="nav">${navs.map(([key,icon,label])=>`<button class="nav-btn ${view===key?'active':''}" data-view="${key}">${I(icon)}<span>${label}</span></button>`).join('')}</nav><div class="side-spacer"></div><div class="side-footer">${I('shield')}<span>Dados demonstrativos.<br/>Nenhuma conta conectada.</span></div></aside><main class="main"><div class="mobile-top"><div class="brand"><span class="brand-mark">${I('layers')}</span><div class="brand-title">Meu Consultório</div></div><span class="demo-mark">${I('info')} Sprint 4</span></div><div class="topbar"><div class="crumb">Meu Consultório <span>/</span> <strong>${headings[view][0]}</strong></div><div class="top-right"><span class="demo-mark">${I('info')} Sprint 3 · demonstração</span><span class="avatar">MC</span></div></div><div class="content">${page}</div><nav class="bottom-nav">${[['home','home','Início'],['agenda','calendar','Agenda'],['patients','users','Pacientes'],['finance','wallet','Financeiro'],['settings','settings','Mais']].map(([key,icon,label])=>`<button data-view="${key}" class="${view===key||(key==='settings'&&view==='reports')?'active':''}">${I(icon)}<span>${label}</span></button>`).join('')}</nav></main></div>${modal?renderModal():''}`}
+function shell(page){return `<div class="shell"><aside class="side"><div class="brand"><span class="brand-mark">${I('layers')}</span><div><div class="brand-title">Meu Consultório</div><div class="brand-caption">Gestão particular</div></div></div><div class="nav-label">Espaço de trabalho</div><nav class="nav">${navs.map(([key,icon,label])=>`<button class="nav-btn ${view===key?'active':''}" data-view="${key}">${I(icon)}<span>${label}</span></button>`).join('')}</nav><div class="side-spacer"></div><div class="side-footer">${I('shield')}<span>Cadastros privados.<br/>Agenda e finanças: exemplo.</span></div></aside><main class="main"><div class="mobile-top"><div class="brand"><span class="brand-mark">${I('layers')}</span><div class="brand-title">Meu Consultório</div></div><span class="demo-mark">${I('info')} Sprint 5</span></div><div class="topbar"><div class="crumb">Meu Consultório <span>/</span> <strong>${headings[view][0]}</strong></div><div class="top-right"><span class="demo-mark">${I('info')} Sprint 5 · demonstração</span><span class="avatar">MC</span></div></div><div class="content">${page}</div><nav class="bottom-nav">${[['home','home','Início'],['agenda','calendar','Agenda'],['patients','users','Pacientes'],['finance','wallet','Financeiro'],['settings','settings','Mais']].map(([key,icon,label])=>`<button data-view="${key}" class="${view===key||(key==='settings'&&view==='reports')?'active':''}">${I(icon)}<span>${label}</span></button>`).join('')}</nav></main></div>${modal?renderModal():''}`}
 function head(name= view,actions=''){const [title,h,sub]=headings[name];return `<div class="section-head"><div><p class="eyebrow">${esc(title)} · experiência visual</p><h1>${h}</h1><p class="subhead">${sub}</p></div>${actions}</div>`}
 function stat(label,val,icon,note){return `<div class="card metric"><span class="metric-icon">${I(icon)}</span><div class="metric-label">${label}</div><div class="metric-value">${val}</div><div class="metric-note">${note}</div></div>`}
 
@@ -107,11 +107,17 @@ function secureLoginScreen() {
     </div></section></div>`;
 }
 function loginScreen(){return `<div class="login-screen"><section class="login-feature"><div class="brand"><span class="brand-mark">${I('layers')}</span><div><div class="brand-title">Meu Consultório</div><div class="brand-caption">Gestão particular</div></div></div><div><div class="login-quote">Um espaço reservado para cuidar da sua rotina.</div><p>Consultas, pacientes e finanças reunidos em uma experiência simples e privativa.</p></div><small style="color:#a7c3b8">Protótipo de identidade visual · não autentica contas</small></section><section class="login-form"><div class="login-box"><span class="login-lock">${I('lock')}</span><h1>Bem-vindo de volta.</h1><p>Esta tela demonstra o futuro acesso exclusivo à sua conta.</p><label class="field">Seu e-mail<input type="email" placeholder="seu@email.com" disabled></label><label class="field">Sua senha<input type="password" placeholder="••••••••" disabled></label><button class="btn primary" data-action="exit-login">Explorar a demonstração ${I('arrow')}</button><p style="font-size:11px;margin-top:21px">Na versão real, haverá autenticação segura. Os campos estão desativados neste protótipo.</p></div></section></div>`}
-function render(){document.title='Meu Consultório — Sprint 4';document.getElementById('app').innerHTML=window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized'?secureLoginScreen():lockPreview?loginScreen():shell(({home:renderHome,agenda:renderAgenda,patients:renderPatients,finance:renderFinance,reports:renderReports,settings:renderSettings})[view]());}
+function render(){document.title='Meu Consultório — Sprint 5';document.getElementById('app').innerHTML=window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized'?secureLoginScreen():lockPreview?loginScreen():shell(({home:renderHome,agenda:renderAgenda,patients:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioPatientsUI.render({head,I,esc,money,query}):renderPatients),finance:renderFinance,reports:renderReports,settings:renderSettings})[view]());}
 function updateAppointment(status,charge=false){const a=appointments.find(x=>x.id===modal.id);if(!a||!a.patientId)return;if(a.chargeId)ledger=ledger.filter(x=>x.id!==a.chargeId);a.chargeId=null;a.status=status;if(charge){a.chargeId='new'+sequence++;ledger.push({id:a.chargeId,date:a.date,patientId:a.patientId,type:'charge',amount:byPatient(a.patientId).price,description:status==='missed'?'Falta cobrada · '+fmtDate(a.date):'Sessão · '+fmtDate(a.date)});}modal=null;render();showToast(status==='done'?'Sessão confirmada. Débito simulado registrado.':status==='scheduled'?'Sessão reaberta e lançamento simulado revertido.':status==='missed'?'Falta registrada na demonstração.':'Cancelamento registrado na demonstração.');}
 window.addEventListener('click',e=>{
  const target=e.target.closest('button,[data-close]');if(!target)return;
  if(window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized' && target.dataset.action!=='auth-signout')return;
+ if(view==='patients' && window.ConsultorioAuth?.enabled && window.ConsultorioPatientsUI){
+   if(target.dataset.realPatient){window.ConsultorioPatientsUI.select(target.dataset.realPatient,render);return;}
+   if((target.dataset.action||'').startsWith('real-patient-')){
+     void window.ConsultorioPatientsUI.handleClick(target,render,showToast);return;
+   }
+ }
  if(target.dataset.close&&e.target===target){modal=null;render();return;}
  if(target.dataset.view){openView(target.dataset.view);return;}
  if(target.dataset.date){selectedDay=target.dataset.date;render();return;}
@@ -159,6 +165,7 @@ window.addEventListener('click',e=>{
 window.addEventListener('input',e=>{if(e.target.id==='patient-search'){query=e.target.value;const pos=e.target.selectionStart;render();let n=$('#patient-search');if(n){n.focus();n.setSelectionRange(pos,pos)}}});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal){modal=null;render()}});
 window.addEventListener('submit',e=>{
+ if(e.target?.id==='real-patient-form'){void window.ConsultorioPatientsUI?.handleSubmit(e,render,showToast);return;}
  if(e.target?.id!=='secure-login-form')return;
  e.preventDefault();
  if(!window.ConsultorioAuth?.enabled)return;
@@ -166,7 +173,14 @@ window.addEventListener('submit',e=>{
  const password=document.getElementById('secure-password')?.value;
  if(email && password) window.ConsultorioAuth.login(email,password);
 });
-window.ConsultorioAuth?.subscribe(render);
+window.ConsultorioAuth?.subscribe(()=>{
+ if(window.ConsultorioAuth.state.phase==='authorized')window.ConsultorioPatients?.load();
+ else {window.ConsultorioPatients?.clear();window.ConsultorioPatientsUI?.reset();}
+ render();
+});
+window.ConsultorioPatients?.subscribe(()=>{
+ if(view==='patients' && window.ConsultorioAuth?.state.phase==='authorized')render();
+});
 render();
 window.ConsultorioAuth?.initialize();
 })();
