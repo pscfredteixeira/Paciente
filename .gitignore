@@ -1,0 +1,14 @@
+# Nunca versionar credenciais, dados de pacientes ou exportações reais
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+*.sqlite
+*.sqlite3
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
