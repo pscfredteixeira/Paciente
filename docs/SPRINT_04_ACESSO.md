@@ -1,12 +1,24 @@
 # Sprint 4 — Controle de acesso exclusivo (pré-ativação)
 
+## Situação de ativação — 11/10/2026
+
+- **Supabase ativo**: projeto Meu Consultório (região São Paulo).
+- **Conta aprovada**: uma conta de e-mail confirmada no Supabase Auth foi incluída em `public.app_access`. Nenhum e-mail, UUID ou senha foi publicado.
+- **Testes RLS**: a conta autorizada consulta sua linha; identidade não autorizada obtém zero linhas; usuário anônimo sem privilégio SELECT.
+- **Frontend**: `assets/config.js` em `mode: "private"`, com URL e chave *publishable* públicas. Os dados no JavaScript continuam fictícios e o código permanece público no GitHub Pages.
+- **Biblioteca Supabase**: cliente de navegador fixado em `@supabase/supabase-js@2.117.3`.
+- **Teste pendente**: o proprietário deve entrar no site usando seu e-mail e senha criados no Supabase. A senha não deve ser compartilhada.
+- **Alerta de segurança atual**: o advisor indicou `Leaked Password Protection Disabled`. Ativar no painel Supabase, em Authentication → Security and Protection (nomes podem variar). Documentação: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+- **Revisão necessária**: desabilitar inscrições públicas não desejadas em Authentication → Providers → Email; verificar opções de MFA.
+- **Limite crucial**: login no protótipo não protege nomes/valores fictícios embutidos em `assets/app.js`. Dados reais só serão adicionados depois de tabelas com RLS testadas, armazenamento privado e decisões LGPD.
+
 ## Estado publicado
 
 **Projeto criado e ativo:** [Meu Consultório no Supabase](https://supabase.com/dashboard/project/tcwbzfsmkhuekvxrbigf), organização `pscfredteixeira`, região `sa-east-1` (São Paulo).
 
 **Migration aplicada:** `sprint_04_access_control` em 11/10/2026. O banco possui `public.app_access` com RLS ativo e política que permite a cada usuário aprovado consultar apenas seu próprio registro. Acesso anônimo bloqueado. `authenticated` não tem INSERT/UPDATE/DELETE. Consultas de validação passaram e os avisos de segurança retornaram vazios.
 
-**Pendente:** criar a conta particular em Authentication > Users, autorizar o respectivo UUID em `app_access`, configurar URL e publishable key no cliente, restringir inscrições públicas e testar o login de ponta a ponta. Ainda há **zero usuários Auth e zero usuários aprovados** no banco.
+**Concluído depois desta etapa:** um usuário com e-mail confirmado foi autorizado e o cliente foi configurado em modo privado. **Pendente:** testar login com a senha pessoal, desabilitar inscrições abertas e ativar proteções adicionais da conta. O backend de pacientes ainda não foi implementado.
  Em `assets/config.js`, `mode: "demo"` mantém a demonstração pública com dados de exemplo. **Não existe proteção efetiva para informações reais enquanto esse modo estiver ativo.**
 
 O site do GitHub Pages continuará público como conjunto de arquivos HTML/CSS/JavaScript. Uma vez ativado o login, a UI só exibirá o aplicativo para a conta autorizada, mas a proteção de dados reais deve ser feita no servidor com políticas RLS — o código no navegador nunca é uma barreira de segurança por si só.
