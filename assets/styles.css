@@ -117,3 +117,9 @@
 @media(max-width:760px){.real-agenda-head h2{font-size:17px}.real-agenda-actions{width:100%;justify-content:space-between}.real-agenda-actions .btn{flex:1}.real-agenda-week{gap:5px}.real-agenda-day{min-height:75px;padding:9px 1px}.real-agenda-day span{font-size:10px}.real-agenda-day strong{font-size:20px}.real-agenda-event{gap:10px}.real-agenda-time{min-width:66px;font-size:12px}.real-agenda-linkcontrols .btn{flex:0 1 auto}.real-agenda-details h3{font-size:15px}}
 @media(max-width:375px){.real-agenda-week{gap:3px}.real-agenda-day{border-radius:9px;min-height:71px}.real-agenda-day span{font-size:9px}.real-agenda-day strong{font-size:18px}.real-agenda-actions .btn{padding:8px 7px;font-size:11px}.real-agenda-event{flex-direction:column;gap:3px}.real-agenda-time{font-size:13px}.real-agenda-linkcontrols label{flex-basis:100%}.real-agenda-linkcontrols .btn{flex:1}}
 @media(prefers-reduced-motion:reduce){.real-agenda-day{transition:none}}
+
+/* Sprint 6.2.1 — conferência dos dados originais no Google */
+.real-agenda-source{display:flex;flex-wrap:wrap;align-items:center;gap:7px 13px;margin:-2px 0 12px}
+.real-agenda-google-link{display:inline-flex;align-items:center;gap:3px;line-height:1.4;font-size:12px;font-weight:750;color:var(--teal-dark);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
+.real-agenda-google-link:focus-visible{outline:3px solid #b898ff;outline-offset:3px;border-radius:3px}
+.real-agenda-source-note{font-size:12px;color:var(--amber-ink);line-height:1.4}
