@@ -19,6 +19,7 @@
   const auth = {
     enabled,
     get state() { return { phase, message }; },
+    get dataClient() { return enabled && phase === 'authorized' ? client : null; },
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
     async initialize() {
       if (!enabled) return;
