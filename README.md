@@ -40,8 +40,8 @@ Leia [arquitetura, fluxo financeiro e requisitos de segurança](./docs/ARQUITETU
 - `supabase/migrations/20261011_01_access.sql`: tabela de permissões com RLS e sem políticas de gravação pelo navegador.
 - `docs/SPRINT_04_ACESSO.md`: procedimento de ativação e testes.
 
-**Não há conexão com Supabase nem usuários reais configurados.** O aplicativo ainda usa dados fictícios e o site permanece público enquanto o modo de demonstração estiver ativo.
+**Projeto Supabase criado em 11/10/2026:** [Meu Consultório](https://supabase.com/dashboard/project/tcwbzfsmkhuekvxrbigf), região São Paulo. A migration de autorização `sprint_04_access_control` foi executada e verificada: RLS ativo; sem leitura anônima e sem criação de permissões pelo cliente. **Ainda não há usuários cadastrados ou autorizados.** O site mantém `mode: "demo"`, utiliza apenas dados fictícios e permanece público. Para ativar o login, seguir [o guia do Sprint 4](./docs/SPRINT_04_ACESSO.md).
 
 ## Próximas etapas
 
-Conectar uma instância Supabase sob sua conta, validar a autorização real e preparar o cadastro administrativo persistente no Sprint 5. Google Calendar e integrações financeiras vêm depois.
+Criar sua conta privada no Supabase Auth, autorizar essa conta no banco e testar o login com segurança antes de mudar o site para modo privado. Depois, preparar o cadastro persistente no Sprint 5. Google Calendar e integrações financeiras vêm depois.
