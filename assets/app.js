@@ -111,6 +111,7 @@ function render(){document.title='Meu Consultório — Sprint 4';document.getEle
 function updateAppointment(status,charge=false){const a=appointments.find(x=>x.id===modal.id);if(!a||!a.patientId)return;if(a.chargeId)ledger=ledger.filter(x=>x.id!==a.chargeId);a.chargeId=null;a.status=status;if(charge){a.chargeId='new'+sequence++;ledger.push({id:a.chargeId,date:a.date,patientId:a.patientId,type:'charge',amount:byPatient(a.patientId).price,description:status==='missed'?'Falta cobrada · '+fmtDate(a.date):'Sessão · '+fmtDate(a.date)});}modal=null;render();showToast(status==='done'?'Sessão confirmada. Débito simulado registrado.':status==='scheduled'?'Sessão reaberta e lançamento simulado revertido.':status==='missed'?'Falta registrada na demonstração.':'Cancelamento registrado na demonstração.');}
 window.addEventListener('click',e=>{
  const target=e.target.closest('button,[data-close]');if(!target)return;
+ if(window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized' && target.dataset.action!=='auth-signout')return;
  if(target.dataset.close&&e.target===target){modal=null;render();return;}
  if(target.dataset.view){openView(target.dataset.view);return;}
  if(target.dataset.date){selectedDay=target.dataset.date;render();return;}
