@@ -20,9 +20,9 @@
 
 /* Sprint 2 — fluxos refinados, legibilidade e hierarquia da paleta aprovada */
 :root{--orange:#ed8730;--orange-bg:#fff0e2;--purple-soft:#f3ebff}
-.side{color:#eee7fc}.side-footer{color:#cfc0ed}.toast{background:var(--dark)}
+.side{color:#eee7fc}.side-footer{color:#cfc0ed}.toast{background:var(--dark);pointer-events:none}
 .eyebrow{color:var(--teal)}.demo-mark{color:#a95b13;background:#fff2e7;border-color:#f7dcc1}
-.metric:nth-child(3) .metric-icon,.metric:nth-child(3) .metric-icon .icon{color:var(--amber-ink);background:var(--orange-bg)}
+.metric-icon{background:var(--purple-soft);color:var(--teal)}.metric:nth-child(3) .metric-icon,.metric:nth-child(3) .metric-icon .icon{color:var(--amber-ink);background:var(--orange-bg)}
 .notice{display:flex;align-items:flex-start;gap:12px;border:1px solid #ebddff;border-radius:15px;background:#faf6ff;padding:16px;margin-bottom:19px}
 .notice>.icon{color:var(--teal);padding-top:1px}.notice strong{display:block;margin-bottom:3px}.notice p{margin:0;color:var(--ink-muted);font-size:12px;line-height:1.5}
 .notice.orange{background:#fff8f0;border-color:#f7dbb9}.notice.orange>.icon{color:var(--amber-ink)}
@@ -35,7 +35,7 @@
 .review .detail-value{padding:9px 0;font-size:12px}
 .review .orange{color:var(--amber-ink);font-weight:700;font-size:12px}
 .panel-eyebrow{text-transform:uppercase;letter-spacing:1.4px;color:var(--teal);font-size:10px;font-weight:800}
-.sheet-foot .btn.primary{min-height:48px}
+.sheet-foot .btn.primary{min-height:48px}.sheet-body{min-height:0;overflow-y:auto;overscroll-behavior:contain}.sheet-foot{flex-shrink:0}.sheet-head{flex-shrink:0}
 .chip:focus-visible,.day:focus-visible,.nav-btn:focus-visible{outline:3px solid #b898ff;outline-offset:2px}
 .chip.active{background:var(--dark)}
 .ledger-header{margin-top:20px}.timeline-item{display:flex;gap:13px;padding:14px 0;border-top:1px solid var(--border);align-items:center}
@@ -129,7 +129,7 @@ function renderModal(){
    actions=`<button class="btn primary" data-action="review-payment">Revisar pagamento ${I('arrow')}</button>`;
   }
  }else if(modal.kind==='reset'){
-  content='<div class="notice orange"><span class="icon">'+I('info')+'</span><div><strong>Apagar as mudanças de teste?</strong><p>Todas as sessões confirmadas e os pagamentos fictícios voltarão aos dados de exemplo. Esta ação não afeta nenhum serviço externo.</p></div></div>';
+  content='<div class="notice orange">'+I('info')+'</span><div><strong>Apagar as mudanças de teste?</strong><p>Todas as sessões confirmadas e os pagamentos fictícios voltarão aos dados de exemplo. Esta ação não afeta nenhum serviço externo.</p></div></div>';
   actions='<button class="btn danger" data-action="apply-reset">Reiniciar dados de exemplo</button>';
  }
  return `<div class="overlay" data-close="true"><div class="sheet" role="dialog" aria-modal="true" aria-label="${title}"><div class="sheet-head"><h2>${title}</h2><button class="x-btn" data-action="close" aria-label="Fechar">${I('close')}</button></div><div class="sheet-body">${content}</div><div class="sheet-foot">${actions}<button class="btn" data-action="close">Fechar</button></div></div></div>`;
