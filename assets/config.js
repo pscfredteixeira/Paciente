@@ -1,8 +1,9 @@
-/* Sprint 4 — Configuração pública de cliente.
-   Para ativar o login, configure o projeto Supabase e a lista autorizada
-   conforme docs/SPRINT_04_ACESSO.md. Nunca coloque service_role/secret aqui. */
+/* Meu Consultório — configuração pública do frontend.
+   A URL e a publishable key são públicas por definição.
+   Nunca adicionar senha, service_role, secret key ou dados de pacientes.
+   A autorização real dos dados depende das políticas RLS no banco. */
 window.MEU_CONSULTORIO_CONFIG = Object.freeze({
-  mode: "demo", // altere para "private" APENAS depois de configurar RLS e seu usuário
-  supabaseUrl: "",
-  supabasePublishableKey: ""
+  mode: "private",
+  supabaseUrl: "https://tcwbzfsmkhuekvxrbigf.supabase.co",
+  supabasePublishableKey: "sb_publishable_oiMRhiFJk9gulUGDP1IIow_mod9TALs"
 });
