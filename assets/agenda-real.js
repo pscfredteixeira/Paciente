@@ -29,13 +29,27 @@ const timeLabel=start=>{
  return Number.isFinite(d.getTime())?new Intl.DateTimeFormat("pt-BR",{hour:"2-digit",minute:"2-digit",timeZone:zone}).format(d):"Horário indisponível";
 };
 const longDate=d=>new Intl.DateTimeFormat("pt-BR",{dateStyle:"full",timeZone:"UTC"}).format(new Date(d+"T12:00:00Z"));
-let selectedDate=localToday(),weekStart=startOfWeek(selectedDate),events=[],links=new Map();
+let selectedDate=localToday(),weekStart=startOfWeek(selectedDate),events=[],links=new Map(),rules=new Map();
 let loadedWeek=null,loading=false,saving=false,error="",filter="all",requestNumber=0,hasMore=false;
 const listeners=new Set(),notify=()=>{for(const fn of listeners){try{fn();}catch(_){}}};
 const safeMessage="Não foi possível carregar a agenda. Tente novamente.";
 const client=()=>window.ConsultorioAuth?.dataClient||null;
 const connected=()=>window.ConsultorioCalendar?.state.connected===true;
 const authorized=()=>window.ConsultorioAuth?.state.phase==="authorized";
+const ruleKey=(kind,value)=>kind+":"+value;
+const activeRule=e=>{
+  const series=e.recurringEventId;
+  if(series&&rules.has(ruleKey("series",series)))return {kind:"series",value:series,patientId:rules.get(ruleKey("series",series))};
+  const title=e.titleKey;
+  if(title&&rules.has(ruleKey("title",title)))return {kind:"title",value:title,patientId:rules.get(ruleKey("title",title))};
+  return null;
+};
+const effectiveLink=e=>links.has(e.id)?{patientId:links.get(e.id),source:"manual"}:(activeRule(e)?{patientId:activeRule(e).patientId,source:"automatic"}:null);
+const ruleFor=e=>e.recurringEventId?{kind:"series",value:e.recurringEventId,label:"todas as semanas desta série"}:
+ (e.titleKey && String(e.summary||"").trim().length>=10
+    && !["consulta","sessão","terapia","sem título","reunião","bloqueado","ocupado"].includes(String(e.summary).trim().toLocaleLowerCase("pt-BR"))
+    ?{kind:"title",value:e.titleKey,label:"todos os eventos com o mesmo título"}:null);
+
 async function loadWeek(force=false){
  if(!authorized()||!connected()||loading||saving||(!force&&loadedWeek===weekStart))return;
  const selectedWeek=weekStart,seq=++requestNumber;
@@ -58,20 +72,24 @@ async function loadWeek(force=false){
        for(const row of data||[])map.set(row.google_event_id,row.patient_id);
      }
    }
+   const db=client();if(!db)throw Error("Sessão expirada.");
+   const {data:ruleRows,error:ruleError}=await db.from("calendar_event_rules").select("match_kind,match_value,patient_id");
+   if(ruleError)throw new Error("Não foi possível carregar os vínculos recorrentes.");
+   const nextRules=new Map((ruleRows||[]).map(r=>[ruleKey(r.match_kind,r.match_value),r.patient_id]));
    if(seq!==requestNumber||!authorized())return;
-   events=found;links=map;loadedWeek=selectedWeek;hasMore=false;
- }catch(e){if(seq===requestNumber){error=e.message||safeMessage;events=[];links=new Map();loadedWeek=null;}}
+   events=found;links=map;rules=nextRules;loadedWeek=selectedWeek;hasMore=false;
+ }catch(e){if(seq===requestNumber){error=e.message||safeMessage;events=[];links=new Map();rules=new Map();loadedWeek=null;}}
  finally{
    if(seq===requestNumber){loading=false;notify();}
    if(authorized()&&connected()&&selectedWeek!==weekStart)Promise.resolve().then(()=>loadWeek());
  }
 }
 const agenda={
- get state(){return{selectedDate,weekStart,events:[...events],links:new Map(links),loadedWeek,loading,saving,error,filter,hasMore};},
+ get state(){return{selectedDate,weekStart,events:[...events],links:new Map(links),rules:new Map(rules),loadedWeek,loading,saving,error,filter,hasMore};},
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
  ensure(){if(authorized()&&connected()&&!loading&&loadedWeek!==weekStart&&!error)void loadWeek();},
  async reload(){error="";loadedWeek=null;await loadWeek(true);},
- reset(){++requestNumber;selectedDate=localToday();weekStart=startOfWeek(selectedDate);events=[];links=new Map();loadedWeek=null;loading=false;saving=false;error="";filter="all";notify();},
+ reset(){++requestNumber;selectedDate=localToday();weekStart=startOfWeek(selectedDate);events=[];links=new Map();rules=new Map();loadedWeek=null;loading=false;saving=false;error="";filter="all";notify();},
  select(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;const d=new Date(date+"T12:00:00Z");if(!Number.isFinite(d.getTime())||fmtISO(d)!==date)return;selectedDate=date;weekStart=startOfWeek(date);error="";notify();agenda.ensure();},
  shift(days){agenda.select(addDays(selectedDate,days));},
  today(){agenda.select(localToday());},
@@ -141,7 +159,7 @@ const agenda={
        +'<button class="btn primary" data-action="real-agenda-refresh">Tentar novamente</button></section>';
    }
    const dayItems=events.filter(e=>localDate(e.start)===selectedDate);
-   const linkedCount=dayItems.filter(e=>links.has(e.id)).length;
+   const linkedCount=dayItems.filter(e=>!!effectiveLink(e)).length;
    const dayLabel=longDate(selectedDate);
    page+='<div class="real-agenda-summary"><div><h3>'+esc(dayLabel)+'</h3><p>'+dayItems.length+' compromisso'+(dayItems.length===1?'':'s')+' encontrado'+(dayItems.length===1?'':'s')
      +' · '+linkedCount+' vinculado'+(linkedCount===1?'':'s')+' a pacientes</p></div>'
@@ -150,29 +168,32 @@ const agenda={
      +[['all','Todos'],['linked','Vinculados'],['unlinked','Sem vínculo']].map(([value,label])=>
        '<button class="chip '+(filter===value?'active':'')+'" data-agenda-filter="'+value+'">'+label+'</button>').join('')
      +'</div>';
-   const visible=dayItems.filter(e=>filter==="all"||(filter==="linked"?links.has(e.id):!links.has(e.id)));
+   const visible=dayItems.filter(e=>filter==="all"||(filter==="linked"?!!effectiveLink(e):!effectiveLink(e)));
    if(!visible.length){
      page+='<div class="empty">'+(dayItems.length?'Nenhum compromisso neste filtro.':'Nenhum evento encontrado neste dia do Google Calendar.')+'</div>';
    }
    const patients=window.ConsultorioPatients?.state||{rows:[],loading:false};
    const available=patients.rows.filter(p=>p.is_active);
    for(const e of visible){
-     const associatedId=links.get(e.id);
+     const matched=effectiveLink(e),associatedId=matched?.patientId,rule=activeRule(e),availableRule=ruleFor(e);
      const patient=patients.rows.find(p=>p.id===associatedId);
      const googleTitle=esc(e.summary||"Sem título");
      const time=esc(timeLabel(e.start));
      const missingTitle=(e.summary||'').trim()==='Sem título';
      const googleNotice=missingTitle?'<span class="real-agenda-source-note">O Google não enviou um título para este evento nesta conexão.</span>':'';
      const currentLabel=patient?'Vinculado: '+esc(patient.full_name):associatedId?'Vínculo indisponível':'Não vinculado';
+     const automaticNote=matched?.source==='automatic'?'<div class="real-agenda-auto-note">Vínculo automático · '+(rule?.kind==='series'?'série recorrente':'mesmo título')+'</div>':'';
      page+='<article class="real-agenda-event"><div class="real-agenda-time">'+time+'</div>'
        +'<div class="real-agenda-details"><h3>'+googleTitle+'</h3><div class="real-agenda-source">'+googleNotice+'</div>'
-       +'<div class="real-agenda-linklabel">'+(associatedId?'<span class="status done">'+currentLabel+'</span>':'<span class="status unlinked">Não vinculado</span>')+'</div>'
+       +'<div class="real-agenda-linklabel">'+(associatedId?'<span class="status done">'+currentLabel+'</span>':'<span class="status unlinked">Não vinculado</span>')+automaticNote+'</div>'
        +'<div class="real-agenda-linkcontrols"><label>Associar ao paciente'
        +'<select aria-label="Paciente para '+googleTitle+'" '+(saving||patients.loading?'disabled':'')+'>'
        +'<option value="">Selecione um paciente...</option>'
        +available.map(p=>'<option value="'+esc(p.id)+'"'+(associatedId===p.id?' selected':'')+'>'+esc(p.full_name)+'</option>').join('')
-       +'</select></label><button class="btn primary sm" data-action="real-agenda-associate" data-event-id="'+esc(e.id)+'" '+(saving||patients.loading||!available.length?'disabled':'')+'>Salvar vínculo</button>'
-       +(associatedId?'<button class="btn sm" data-action="real-agenda-unlink" data-event-id="'+esc(e.id)+'" '+(saving?'disabled':'')+'>Desvincular</button>':'')
+       +'</select></label><button class="btn sm" data-action="real-agenda-associate" data-event-id="'+esc(e.id)+'" '+(saving||patients.loading||!available.length?'disabled':'')+'>Só esta sessão</button>'
+       +(availableRule?'<button class="btn primary sm" data-action="real-agenda-associate-all" data-event-id="'+esc(e.id)+'" '+(saving||patients.loading||!available.length?'disabled':'')+'>'+(availableRule.kind==='series'?'Vincular todas as semanas':'Vincular mesmo título')+'</button>':'')
+       +(links.has(e.id)?'<button class="btn sm" data-action="real-agenda-unlink" data-event-id="'+esc(e.id)+'" '+(saving?'disabled':'')+'>'+(rule?'Remover exceção':'Desvincular esta sessão')+'</button>':'')
+       +(rule?'<button class="btn sm" data-action="real-agenda-stop-rule" data-event-id="'+esc(e.id)+'" '+(saving?'disabled':'')+'>Parar vínculo automático</button>':'')
        +'</div></div></article>';
    }
    if(!available.length){
