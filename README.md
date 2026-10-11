@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 6.2
+# Meu Consultório — Sprint 6.3
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -8,7 +8,7 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Pacientes:** cadastro privado, busca, edição, valor de sessão, frequência, arquivamento e reativação. Registros no Supabase com RLS.
 
-**Agenda:** compromissos da agenda principal do Google Calendar, com navegação por semanas e dias, consulta em modo somente leitura e vínculo manual aos pacientes privados. A associação é salva no Supabase, mesmo após atualizar a página. O Google Calendar não é alterado pela aplicação.
+**Agenda:** compromissos da agenda principal do Google Calendar, com navegação por semanas e dias, consulta em modo somente leitura e vínculo aos pacientes privados. Agora há dois tipos de associação: **Só esta sessão** e **Vincular todas as semanas** para séries recorrentes. Para eventos separados com o mesmo título específico, há **Vincular mesmo título** com confirmação. As regras ficam salvas no Supabase e se aplicam automaticamente às semanas anteriores e futuras. O Google Calendar não é alterado.
 
 **Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
@@ -39,6 +39,7 @@ docs/
   SPRINT_04_ACESSO.md
   SPRINT_05_PACIENTES.md
   SPRINT_06_2_AGENDA.md
+  SPRINT_06_3_SERIES.md
 ```
 
 ## Segurança
@@ -47,7 +48,7 @@ O repositório e os arquivos de frontend do GitHub Pages são públicos. **Não 
 
 Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Recomenda-se ativar essa opção e revisar configurações de cadastro público e MFA. A autorização Google em modo Testando pode expirar, exigindo nova conexão.
 
-[Detalhes técnicos e testes da Agenda real](./docs/SPRINT_06_2_AGENDA.md).
+[Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md).
 
 ## Próxima etapa
 
