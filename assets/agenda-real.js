@@ -112,6 +112,47 @@ const agenda={
    }catch(_){return {ok:false,message:"Não foi possível salvar o vínculo. Tente novamente."};}
    finally{saving=false;notify();}
  },
+ async associateAll(eventId,patientId){
+   if(!authorized()||!connected()||loading||saving||loadedWeek!==weekStart)return {ok:false,message:"Atualize a agenda antes de vincular."};
+   const event=events.find(e=>e.id===eventId);
+   const selector=event?ruleFor(event):null;
+   if(!selector)return {ok:false,message:"Este compromisso não tem uma série ou um título específico para vincular em conjunto."};
+   const patient=window.ConsultorioPatients?.state.rows.find(p=>p.id===patientId&&p.is_active);
+   if(!patient)return {ok:false,message:"Selecione um paciente ativo."};
+   const db=client();if(!db)return {ok:false,message:"Sua sessão expirou."};
+   saving=true;notify();
+   try{
+     const key=ruleKey(selector.kind,selector.value),update=rules.has(key);
+     const query=update?db.from("calendar_event_rules").update({patient_id:patientId})
+       .eq("match_kind",selector.kind).eq("match_value",selector.value)
+       :db.from("calendar_event_rules").insert({match_kind:selector.kind,match_value:selector.value,patient_id:patientId});
+     const {data,error:dbError}=await query.select("match_kind,match_value").maybeSingle();
+     if(dbError||!data?.match_value)throw Error("Falha ao salvar regra de vinculação.");
+     rules.set(key,patientId);
+     const conflict=links.has(eventId)&&links.get(eventId)!==patientId;
+     return {ok:true,message:selector.kind==="series"?
+       "Série vinculada! As ocorrências anteriores e futuras desta série serão reconhecidas. Nenhuma cobrança foi criada.":
+       "Regra salva! Eventos anteriores e futuros com o título exatamente igual serão reconhecidos. Nenhuma cobrança foi criada."
+       +(conflict?" A sessão atual tem uma associação individual diferente que continua valendo.":"")};
+   }catch(_){return {ok:false,message:"Não foi possível salvar a vinculação automática. Tente novamente."};}
+   finally{saving=false;notify();}
+ },
+ async stopRule(eventId){
+   if(!authorized()||!connected()||loading||saving)return {ok:false,message:"Aguarde."};
+   const event=events.find(e=>e.id===eventId),selector=event?activeRule(event):null;
+   if(!selector)return {ok:false,message:"Este evento não tem vínculo automático."};
+   const db=client();if(!db)return {ok:false,message:"Sua sessão expirou."};
+   saving=true;notify();
+   try{
+     const {data,error:dbError}=await db.from("calendar_event_rules").delete()
+       .eq("match_kind",selector.kind).eq("match_value",selector.value)
+       .select("match_kind,match_value").maybeSingle();
+     if(dbError||!data?.match_value)throw Error("Regra não removida");
+     rules.delete(ruleKey(selector.kind,selector.value));
+     return {ok:true,message:"Vínculo automático interrompido. Vínculos salvos individualmente foram preservados; eventos no Google não mudaram."};
+   }catch(_){return {ok:false,message:"Não foi possível interromper a vinculação automática."};}
+   finally{saving=false;notify();}
+ },
  async unlink(eventId){
    if(!authorized()||!connected()||loading||saving)return {ok:false,message:"Aguarde."};
    if(!links.has(eventId))return {ok:false,message:"Evento não vinculado."};
@@ -122,7 +163,7 @@ const agenda={
        .eq("google_event_id",eventId).select("google_event_id").maybeSingle();
      if(dbError||!data?.google_event_id)throw new Error("Vínculo não removido.");
      links.delete(eventId);
-     return {ok:true,message:"Vínculo removido. O evento continua no Google Calendar."};
+     return {ok:true,message:"Vínculo individual removido. Se existe uma regra automática para esta série ou título, ela continua valendo. O Google Calendar não foi alterado."};
    }catch(_){return {ok:false,message:"Não foi possível remover o vínculo."};}
    finally{saving=false;notify();}
  },
@@ -211,11 +252,27 @@ const agenda={
    if(act==="real-agenda-next"){agenda.shift(7);return true;}
    if(act==="real-agenda-today"){agenda.today();return true;}
    if(act==="real-agenda-refresh"){await agenda.reload();return true;}
-   if(act==="real-agenda-associate"){
+   if(act==="real-agenda-associate"||act==="real-agenda-associate-all"){
      const card=target.closest(".real-agenda-event");
      const patientId=card?.querySelector("select")?.value||"";
+     if(!patientId){toast("Selecione um paciente antes de salvar.");return true;}
+     if(act==="real-agenda-associate-all"){
+       const event=events.find(e=>e.id===target.dataset.eventId);
+       const rule=event?ruleFor(event):null;
+       const patient=window.ConsultorioPatients?.state.rows.find(p=>p.id===patientId);
+       if(!event||!rule||!patient){toast("Selecione um evento e paciente válidos.");return true;}
+       const msg=rule.kind==="series"?
+         'Vincular TODAS as ocorrências da série "'+event.summary+'" ao paciente '+patient.full_name+'? Isso inclui as anteriores e futuras e não cria cobranças. Vínculos individuais anteriores continuam valendo.':
+         'Vincular TODOS os eventos com o título EXATAMENTE igual a "'+event.summary+'" ao paciente '+patient.full_name+'? Isso inclui agendamentos anteriores e futuros, mesmo se não forem uma série. Confira se o título identifica sempre a mesma pessoa. Nenhuma cobrança será criada.';
+       if(!window.confirm(msg))return true;
+       const result=await agenda.associateAll(event.id,patientId);toast(result.message);return true;
+     }
      const outcome=await agenda.associate(target.dataset.eventId,patientId);
      toast(outcome.message);return true;
+   }
+   if(act==="real-agenda-stop-rule"){
+     if(!window.confirm("Parar a associação automática para esta série ou título? Os vínculos individuais já salvos permanecerão."))return true;
+     const outcome=await agenda.stopRule(target.dataset.eventId);toast(outcome.message);return true;
    }
    if(act==="real-agenda-unlink"){
      if(!window.confirm("Desvincular o paciente deste evento? O Google Calendar não será alterado."))return true;
