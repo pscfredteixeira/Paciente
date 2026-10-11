@@ -161,15 +161,11 @@ const agenda={
      const patient=patients.rows.find(p=>p.id===associatedId);
      const googleTitle=esc(e.summary||"Sem título");
      const time=esc(timeLabel(e.start));
-     const rawGoogleUrl=String(e.googleUrl||'');
-     let safeGoogleUrl='';
-     try{const u=new URL(rawGoogleUrl);if(u.protocol==='https:'&&u.hostname==='www.google.com'&&u.pathname.startsWith('/calendar/'))safeGoogleUrl=u.toString();}catch(_){}
-     const googleLink=safeGoogleUrl?'<a class="real-agenda-google-link" href="'+esc(safeGoogleUrl)+'" target="_blank" rel="noopener noreferrer">Conferir este evento no Google ↗</a>':'';
      const missingTitle=(e.summary||'').trim()==='Sem título';
      const googleNotice=missingTitle?'<span class="real-agenda-source-note">O Google não enviou um título para este evento nesta conexão.</span>':'';
      const currentLabel=patient?'Vinculado: '+esc(patient.full_name):associatedId?'Vínculo indisponível':'Não vinculado';
      page+='<article class="real-agenda-event"><div class="real-agenda-time">'+time+'</div>'
-       +'<div class="real-agenda-details"><h3>'+googleTitle+'</h3><div class="real-agenda-source">'+googleLink+googleNotice+'</div>'
+       +'<div class="real-agenda-details"><h3>'+googleTitle+'</h3><div class="real-agenda-source">'+googleNotice+'</div>'
        +'<div class="real-agenda-linklabel">'+(associatedId?'<span class="status done">'+currentLabel+'</span>':'<span class="status unlinked">Não vinculado</span>')+'</div>'
        +'<div class="real-agenda-linkcontrols"><label>Associar ao paciente'
        +'<select aria-label="Paciente para '+googleTitle+'" '+(saving||patients.loading?'disabled':'')+'>'
