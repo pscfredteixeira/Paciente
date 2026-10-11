@@ -2,16 +2,21 @@
 
 ## Estado publicado
 
-O código de login e a base SQL foram adicionados, mas **a instância Supabase não está conectada**. Em `assets/config.js`, `mode: "demo"` mantém a demonstração pública com dados de exemplo. **Não existe proteção efetiva para informações reais enquanto esse modo estiver ativo.**
+**Projeto criado e ativo:** [Meu Consultório no Supabase](https://supabase.com/dashboard/project/tcwbzfsmkhuekvxrbigf), organização `pscfredteixeira`, região `sa-east-1` (São Paulo).
+
+**Migration aplicada:** `sprint_04_access_control` em 11/10/2026. O banco possui `public.app_access` com RLS ativo e política que permite a cada usuário aprovado consultar apenas seu próprio registro. Acesso anônimo bloqueado. `authenticated` não tem INSERT/UPDATE/DELETE. Consultas de validação passaram e os avisos de segurança retornaram vazios.
+
+**Pendente:** criar a conta particular em Authentication > Users, autorizar o respectivo UUID em `app_access`, configurar URL e publishable key no cliente, restringir inscrições públicas e testar o login de ponta a ponta. Ainda há **zero usuários Auth e zero usuários aprovados** no banco.
+ Em `assets/config.js`, `mode: "demo"` mantém a demonstração pública com dados de exemplo. **Não existe proteção efetiva para informações reais enquanto esse modo estiver ativo.**
 
 O site do GitHub Pages continuará público como conjunto de arquivos HTML/CSS/JavaScript. Uma vez ativado o login, a UI só exibirá o aplicativo para a conta autorizada, mas a proteção de dados reais deve ser feita no servidor com políticas RLS — o código no navegador nunca é uma barreira de segurança por si só.
 
 ## Passos para ativar — somente quando houver projeto Supabase
 
-1. Criar um projeto em https://supabase.com/dashboard. Não publicar senha, chaves secretas, token de serviço ou arquivos de dados.
+1. **Concluído:** projeto Supabase criado. Não publicar senha, chaves secretas, token de serviço ou arquivos de dados.
 2. Em **Authentication**, habilitar email/senha, impedir inscrições abertas e configurar recuperação de senha, redirecionamentos e proteção adicional (MFA, se disponível).
 3. Criar manualmente **um** usuário autorizado via Authentication > Users. Não colocar sua senha nem seu UUID no GitHub.
-4. No SQL Editor, executar `supabase/migrations/20261011_01_access.sql`. Essa migration cria `public.app_access`, habilita RLS e permite apenas consultar a própria autorização.
+4. **Concluído:** `supabase/migrations/20261011_01_access.sql` já foi aplicada no projeto, criando `public.app_access` com RLS.
 5. No SQL Editor, autorizar sua conta com seu UUID obtido do painel Auth (inserir sem compartilhar o valor):
 
 ```sql
@@ -37,7 +42,7 @@ values ('UUID_DO_USUARIO_CRIADO');
 
 ## Limitações deliberadas
 
-- **Não conectado:** nada neste Sprint cria projeto Supabase, executa SQL ou configura usuários.
+- **Conectado parcialmente:** projeto Supabase e tabela de autorização foram criados e testados; ainda não existe conta de usuário ou sessão conectada no aplicativo.
 - Login pronto para integração, mas não foi validado contra um Supabase real.
 - O aplicativo ainda usa dados simulados em memória. Login autorizado não significa que o financeiro tenha persistência.
 - Google Calendar, Pix, dados administrativos reais e backups são etapas futuras.
