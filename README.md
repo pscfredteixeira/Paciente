@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 5
+# Meu Consultório — Sprint 6
 
 Aplicativo pessoal de gestão do consultório, com **login exclusivo no Supabase** e interface roxa/laranja, otimizada para iPhone e desktop.
 
@@ -7,6 +7,15 @@ Aplicativo pessoal de gestão do consultório, com **login exclusivo no Supabase
 ## O que já funciona com persistência real
 
 **Aba Pacientes:** cadastrar, consultar, editar, buscar, arquivar e reativar pacientes, com nome administrativo, valor por sessão em reais e frequência. Esses dados ficam no banco Supabase protegido por RLS. Acesso anônimo e de contas não aprovadas é bloqueado. Ainda não há pacientes registrados no banco.
+
+## Google Calendar — integração em teste
+
+- Em **Ajustes**, o botão **Conectar Google Calendar** inicia a autorização oficial do Google, solicitando somente `calendar.events.readonly`.
+- A Edge Function `google-calendar-callback` recebe a autorização em servidor, confere estado de uso único, PKCE e a conta Supabase aprovada, mantendo tokens fora do navegador.
+- As tabelas `google_calendar_tokens` e `google_calendar_oauth_attempts` têm RLS ativo, sem acesso das roles `anon` e `authenticated`.
+- Uma vez conectado, **Ver próximos eventos** lista eventos da agenda principal do Google somente para consulta. Nenhum evento é alterado ou registrado como sessão realizada.
+- **Ainda não houve teste do fluxo com sua conta Google**. Confirme que o CLIENT_SECRET antigo, exposto em uma captura de tela, foi revogado e substituído antes de conectar.
+- Enquanto o app OAuth do Google estiver em modo **Testando**, pode ser necessário reconectar após a expiração do refresh token.
 
 ## O que ainda é uma demonstração
 
@@ -45,5 +54,5 @@ O cadastro privado usa apenas uma chave **publishable** e políticas RLS no Supa
 ## Próximas etapas
 
 - Validar criação/edição/arquivamento no navegador com a conta aprovada.
-- Sprint 6: integrar Google Calendar apenas para leitura, mantendo o agendamento no sistema atual.
+- Concluir o teste OAuth do Sprint 6 e revisar os eventos obtidos, sempre sem modificar o agendamento no Google.
 - Depois: sessões reais, lançamentos financeiros auditáveis, pagamentos e conciliação.
