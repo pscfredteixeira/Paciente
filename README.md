@@ -1,19 +1,18 @@
-# Meu Consultório — Sprint 4 (login privado)
+# Meu Consultório — Sprint 5
 
-Aplicativo web pessoal para acompanhar sessões e pagamentos. **O login está ativado, mas os dados exibidos ainda são inteiramente fictícios.** O aplicativo não contém prontuários ou contas de pacientes reais.
+Aplicativo pessoal de gestão do consultório, com **login exclusivo no Supabase** e interface roxa/laranja, otimizada para iPhone e desktop.
 
-**Acessar:** https://pscfredteixeira.github.io/Paciente/
+**Entrar no aplicativo:** https://pscfredteixeira.github.io/Paciente/
 
-## Situação atual
+## O que já funciona com persistência real
 
-- Uma conta cadastrada e confirmada no Supabase Auth, autorizada exclusivamente na tabela `app_access`.
-- Login com e-mail e senha conectado ao Supabase (cliente JavaScript com versão fixada).
-- RLS testado: identidade autorizada pode consultar a própria permissão; outra identidade não pode; usuário anônimo sem leitura.
-- O site está em `mode: "private"`. Os arquivos estáticos do GitHub Pages continuam públicos.
-- Agenda, pacientes, sessões, débitos, recebimentos e relatórios **apenas simulados**. Recarregar a página reinicia os dados.
-- **Pendente:** testar login real no navegador com as credenciais do proprietário e ativar proteção contra senhas vazadas no painel Supabase.
+**Aba Pacientes:** cadastrar, consultar, editar, buscar, arquivar e reativar pacientes, com nome administrativo, valor por sessão em reais e frequência. Esses dados ficam no banco Supabase protegido por RLS. Acesso anônimo e de contas não aprovadas é bloqueado. Ainda não há pacientes registrados no banco.
 
-## Estrutura
+## O que ainda é uma demonstração
+
+**Início, Agenda, Financeiro e Relatórios:** usam eventos, saldos e pagamentos **fictícios**, inseridos no JavaScript apenas para avaliação do layout e fluxos. Não são registros reais e não devem ser usados para cobrança de pacientes. A vinculação dos cadastros reais ao Google Calendar, sessões e financeiro será feita nos próximos sprints.
+
+## Arquivos
 
 ```text
 index.html
@@ -21,28 +20,30 @@ assets/
   styles.css
   app.js
   auth.js
-  config.js             # contém apenas URL e chave publishable
-supabase/
-  migrations/
-    20261011_01_access.sql
+  config.js
+  patients.js
+  patients-ui.js
+supabase/migrations/
+  20261011_01_access.sql
+  20261011191842_sprint_05_patients_private.sql
+  20261011192348_sprint_05_limit_patient_columns.sql
 docs/
   ARQUITETURA.md
   SPRINT_04_ACESSO.md
+  SPRINT_05_PACIENTES.md
 .gitignore
 ```
 
-Os títulos são grossos e sem serifa, a interface é roxa com destaques em laranja, responsiva para celular e desktop.
+## Proteção de dados
 
-## Segurança
+O **GitHub Pages e os arquivos JavaScript são públicos**, mesmo com login. Por isso, nunca inserir dados de pacientes, senhas, tokens secretos, comprovantes, diagnósticos ou anotações clínicas diretamente no repositório.
 
-**Não coloque dados reais de pacientes em `assets/app.js`, no código público nem em arquivos estáticos do GitHub Pages.** Mesmo com tela de login, qualquer pessoa pode obter os arquivos públicos. Somente o backend e as políticas de acesso ao banco poderão proteger informações reais em sprints posteriores.
+O cadastro privado usa apenas uma chave **publishable** e políticas RLS no Supabase. Há uma conta autorizada; não existem pacientes cadastrados neste momento.
 
-A URL do Supabase e a chave `sb_publishable_` são públicas por definição; senhas, service_role, secret key e tokens administrativos **não devem estar no repositório**.
+**Pendência de segurança:** ativar [proteção contra senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), revisar inscrições abertas e configurar autenticação multifator quando possível, antes de uso com dados reais em produção. Mais detalhes no [Sprint 5](./docs/SPRINT_05_PACIENTES.md).
 
-O Supabase apontou um aviso: **Leaked Password Protection Disabled**. Consulte [o guia do Sprint 4](./docs/SPRINT_04_ACESSO.md) para ativar essa proteção, revisar inscrições abertas e configurar MFA.
+## Próximas etapas
 
-Nenhum pagamento real é processado; Google Calendar, Pix, conciliação bancária, backup e armazenamento definitivo de pacientes ainda não estão conectados.
-
-## Próxima etapa
-
-Validar o login pessoal e as configurações de segurança. O Sprint 5 criará cadastro persistente de pacientes com RLS antes da importação de qualquer informação real.
+- Validar criação/edição/arquivamento no navegador com a conta aprovada.
+- Sprint 6: integrar Google Calendar apenas para leitura, mantendo o agendamento no sistema atual.
+- Depois: sessões reais, lançamentos financeiros auditáveis, pagamentos e conciliação.
