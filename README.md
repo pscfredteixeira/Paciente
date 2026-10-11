@@ -1,58 +1,54 @@
-# Meu Consultório — Sprint 6
+# Meu Consultório — Sprint 6.2
 
-Aplicativo pessoal de gestão do consultório, com **login exclusivo no Supabase** e interface roxa/laranja, otimizada para iPhone e desktop.
+Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
-**Entrar no aplicativo:** https://pscfredteixeira.github.io/Paciente/
+**Abrir aplicativo:** https://pscfredteixeira.github.io/Paciente/
 
-## O que já funciona com persistência real
+## Partes que já são reais
 
-**Aba Pacientes:** cadastrar, consultar, editar, buscar, arquivar e reativar pacientes, com nome administrativo, valor por sessão em reais e frequência. Esses dados ficam no banco Supabase protegido por RLS. Acesso anônimo e de contas não aprovadas é bloqueado. Ainda não há pacientes registrados no banco.
+**Pacientes:** cadastro privado, busca, edição, valor de sessão, frequência, arquivamento e reativação. Registros no Supabase com RLS.
 
-## Google Calendar — integração em teste
+**Agenda:** compromissos da agenda principal do Google Calendar, com navegação por semanas e dias, consulta em modo somente leitura e vínculo manual aos pacientes privados. A associação é salva no Supabase, mesmo após atualizar a página. O Google Calendar não é alterado pela aplicação.
 
-- Em **Ajustes**, o botão **Conectar Google Calendar** inicia a autorização oficial do Google, solicitando somente `calendar.events.readonly`.
-- A Edge Function `google-calendar-callback` recebe a autorização em servidor, confere estado de uso único, PKCE e a conta Supabase aprovada, mantendo tokens fora do navegador.
-- As tabelas `google_calendar_tokens` e `google_calendar_oauth_attempts` têm RLS ativo, sem acesso das roles `anon` e `authenticated`.
-- Uma vez conectado, **Ver próximos eventos** lista eventos da agenda principal do Google somente para consulta. Nenhum evento é alterado ou registrado como sessão realizada.
-- **Ainda não houve teste do fluxo com sua conta Google**. Confirme que o CLIENT_SECRET antigo, exposto em uma captura de tela, foi revogado e substituído antes de conectar.
-- Enquanto o app OAuth do Google estiver em modo **Testando**, pode ser necessário reconectar após a expiração do refresh token.
+**Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
-## O que ainda é uma demonstração
+## Partes que ainda são demonstração
 
-**Início, Agenda, Financeiro e Relatórios:** usam eventos, saldos e pagamentos **fictícios**, inseridos no JavaScript apenas para avaliação do layout e fluxos. Não são registros reais e não devem ser usados para cobrança de pacientes. A vinculação dos cadastros reais ao Google Calendar, sessões e financeiro será feita nos próximos sprints.
+**Início, Financeiro e Relatórios:** dados inventados, exibidos apenas para prototipagem. Nenhuma consulta real marcada como realizada, nenhum débito ou pagamento real é lançado. A cobrança automática após confirmar uma sessão será implementada em um sprint posterior, com controle contra duplicações.
 
-## Arquivos
+## Código modular
 
 ```text
 index.html
 assets/
-  styles.css
   app.js
   auth.js
   config.js
   patients.js
   patients-ui.js
+  calendar.js
+  agenda-real.js
+  styles.css
 supabase/migrations/
   20261011_01_access.sql
   20261011191842_sprint_05_patients_private.sql
   20261011192348_sprint_05_limit_patient_columns.sql
+  20261011225800_sprint_06_2_calendar_event_links.sql
 docs/
   ARQUITETURA.md
   SPRINT_04_ACESSO.md
   SPRINT_05_PACIENTES.md
-.gitignore
+  SPRINT_06_2_AGENDA.md
 ```
 
-## Proteção de dados
+## Segurança
 
-O **GitHub Pages e os arquivos JavaScript são públicos**, mesmo com login. Por isso, nunca inserir dados de pacientes, senhas, tokens secretos, comprovantes, diagnósticos ou anotações clínicas diretamente no repositório.
+O repositório e os arquivos de frontend do GitHub Pages são públicos. **Não versionar nomes de pacientes, eventos privados, informações clínicas, senhas ou tokens nesse repositório.** Os dados administrativos persistidos estão no banco com RLS. OAuth do Google funciona com tokens armazenados apenas no Supabase servidor.
 
-O cadastro privado usa apenas uma chave **publishable** e políticas RLS no Supabase. Há uma conta autorizada; não existem pacientes cadastrados neste momento.
+Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Recomenda-se ativar essa opção e revisar configurações de cadastro público e MFA. A autorização Google em modo Testando pode expirar, exigindo nova conexão.
 
-**Pendência de segurança:** ativar [proteção contra senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection), revisar inscrições abertas e configurar autenticação multifator quando possível, antes de uso com dados reais em produção. Mais detalhes no [Sprint 5](./docs/SPRINT_05_PACIENTES.md).
+[Detalhes técnicos e testes da Agenda real](./docs/SPRINT_06_2_AGENDA.md).
 
-## Próximas etapas
+## Próxima etapa
 
-- Validar criação/edição/arquivamento no navegador com a conta aprovada.
-- Concluir o teste OAuth do Sprint 6 e revisar os eventos obtidos, sempre sem modificar o agendamento no Google.
-- Depois: sessões reais, lançamentos financeiros auditáveis, pagamentos e conciliação.
+Validar a Agenda Google no navegador; depois criar sessões reais e lançamentos financeiros persistentes, evitando débitos duplicados.
