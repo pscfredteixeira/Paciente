@@ -1,4 +1,4 @@
-# Sprint 4 — Controle de acesso exclusivo (pré-ativação)
+# Sprint 4 — Controle de acesso exclusivo (login ativo, teste pessoal pendente)
 
 ## Situação de ativação — 11/10/2026
 
@@ -16,30 +16,30 @@
 
 **Projeto criado e ativo:** [Meu Consultório no Supabase](https://supabase.com/dashboard/project/tcwbzfsmkhuekvxrbigf), organização `pscfredteixeira`, região `sa-east-1` (São Paulo).
 
-**Migration aplicada:** `sprint_04_access_control` em 11/10/2026. O banco possui `public.app_access` com RLS ativo e política que permite a cada usuário aprovado consultar apenas seu próprio registro. Acesso anônimo bloqueado. `authenticated` não tem INSERT/UPDATE/DELETE. Consultas de validação passaram e os avisos de segurança retornaram vazios.
+**Migration aplicada:** `sprint_04_access_control` em 11/10/2026. O banco possui `public.app_access` com RLS ativo e política que permite a cada usuário aprovado consultar apenas seu próprio registro. Acesso anônimo bloqueado. `authenticated` não tem INSERT/UPDATE/DELETE. Consultas de validação passaram. O advisor de segurança apontou um aviso de proteção contra senhas vazadas desativada, que ainda deve ser resolvido.
 
 **Concluído depois desta etapa:** um usuário com e-mail confirmado foi autorizado e o cliente foi configurado em modo privado. **Pendente:** testar login com a senha pessoal, desabilitar inscrições abertas e ativar proteções adicionais da conta. O backend de pacientes ainda não foi implementado.
- Em `assets/config.js`, `mode: "demo"` mantém a demonstração pública com dados de exemplo. **Não existe proteção efetiva para informações reais enquanto esse modo estiver ativo.**
+ Em `assets/config.js`, `mode: "private"` exige autenticação para exibir a interface. **Essa barreira visual não protege dados incorporados aos arquivos estáticos públicos.**
 
 O site do GitHub Pages continuará público como conjunto de arquivos HTML/CSS/JavaScript. Uma vez ativado o login, a UI só exibirá o aplicativo para a conta autorizada, mas a proteção de dados reais deve ser feita no servidor com políticas RLS — o código no navegador nunca é uma barreira de segurança por si só.
 
-## Passos para ativar — somente quando houver projeto Supabase
+## Configuração final e verificações
 
 1. **Concluído:** projeto Supabase criado. Não publicar senha, chaves secretas, token de serviço ou arquivos de dados.
 2. Em **Authentication**, habilitar email/senha, impedir inscrições abertas e configurar recuperação de senha, redirecionamentos e proteção adicional (MFA, se disponível).
-3. Criar manualmente **um** usuário autorizado via Authentication > Users. Não colocar sua senha nem seu UUID no GitHub.
+3. **Concluído:** um usuário autorizado já foi criado no painel Authentication > Users; não colocar sua senha nem seu UUID no GitHub.
 4. **Concluído:** `supabase/migrations/20261011_01_access.sql` já foi aplicada no projeto, criando `public.app_access` com RLS.
-5. No SQL Editor, autorizar sua conta com seu UUID obtido do painel Auth (inserir sem compartilhar o valor):
+5. **Concluído:** a conta existente foi inserida em `app_access` sem gravar seu UUID no GitHub. Caso precise repetir manualmente em uma instalação nova, o comando é:
 
 ```sql
 insert into public.app_access (user_id)
 values ('UUID_DO_USUARIO_CRIADO');
 ```
 
-6. Em **Project Settings > API**, obter apenas a URL do projeto e a chave **publishable** do cliente (ou a chave pública anon legada). Nunca usar secret key ou service_role no browser.
-7. Inserir URL e chave publishable em `assets/config.js` e mudar `mode` de `demo` para `private`. A URL e essa chave são destinadas ao cliente, mas só são seguras com RLS. Os arquivos da aplicação continuarão públicos.
+6. **Concluído:** foram obtidas a URL do projeto e a chave **publishable**. Nunca usar secret key ou service_role no browser.
+7. **Concluído:** a URL e a chave publishable estão em `assets/config.js`, configurado com `mode: "private"`. Os arquivos da aplicação continuarão públicos e dados reais dependerão das próprias políticas RLS no banco.
 8. Conferir o redirecionamento no domínio final do GitHub Pages: `https://pscfredteixeira.github.io/Paciente/`. Este Sprint usa email/senha e não exige OAuth para entrar.
-9. Verificar o funcionamento sem dados reais: deslogado -> bloqueado; conta não autorizada -> bloqueado; conta autorizada -> visualiza **apenas dados fictícios**; sair -> bloqueado novamente.
+9. **Pendente:** testar pessoalmente com senha válida: deslogado → bloqueado; conta aprovada → acessa **apenas dados fictícios**; sair → bloqueado novamente. A RLS foi verificada em SQL, mas o fluxo completo via navegador ainda não foi confirmado.
 10. Somente em sprints posteriores, com tabelas próprias e políticas RLS adicionais testadas, usar dados reais. Não copiar exemplos de pacientes para tabelas de produção.
 
 ## Testes de acesso obrigatórios
@@ -54,7 +54,7 @@ values ('UUID_DO_USUARIO_CRIADO');
 
 ## Limitações deliberadas
 
-- **Conectado parcialmente:** projeto Supabase e tabela de autorização foram criados e testados; ainda não existe conta de usuário ou sessão conectada no aplicativo.
+- **Conectado parcialmente:** projeto Supabase e tabela de autorização foram criados e testados; existe uma conta aprovada, mas o login real ainda não foi testado pelo proprietário.
 - Login pronto para integração, mas não foi validado contra um Supabase real.
 - O aplicativo ainda usa dados simulados em memória. Login autorizado não significa que o financeiro tenha persistência.
 - Google Calendar, Pix, dados administrativos reais e backups são etapas futuras.
