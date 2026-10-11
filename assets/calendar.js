@@ -25,6 +25,12 @@ window.ConsultorioCalendar={
   async status(){if(busy)return;busy=true;error="";notify();try{const r=await api("status");connected=!!r.connected;loaded=true;}catch(e){error=e.message||"Falha de conexão";}finally{busy=false;notify();}},
   async connect(){if(busy)return;busy=true;error="";notify();try{const r=await api("start","POST");if(!r.url||!r.url.startsWith("https://accounts.google.com/"))throw Error("Link inválido.");window.location.assign(r.url);}catch(e){error=e.message||"Não foi possível conectar.";busy=false;notify();}},
   async disconnect(){if(busy)return;busy=true;error="";notify();try{await api("disconnect","POST");connected=false;events=[];}catch(e){error=e.message||"Falha ao desconectar";}finally{busy=false;notify();}},
+  async fetchRange(start,end){
+    if(!connected)throw Error("A agenda ainda não está conectada ao Google.");
+    const answer=await api("events","GET",{timeMin:start,timeMax:end});
+    if(!Array.isArray(answer.events))throw Error("Resposta inválida do Google Calendar.");
+    return {events:answer.events,hasMore:!!answer.hasMore};
+  },
   async load(){if(busy||!connected)return;busy=true;error="";notify();try{
     const now=new Date(),start=new Date(now.getTime()-86400000),end=new Date(now.getTime()+14*86400000);
     const r=await api("events","GET",{timeMin:start.toISOString(),timeMax:end.toISOString()});
