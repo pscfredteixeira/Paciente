@@ -4,7 +4,7 @@
 "use strict";
 const listeners=new Set();
 let records=new Map(),weekLoading=false,weekError="",historyPatientId=null;
-let history=[],audit=[],historyLoading=false,historyError="",saving=false,revision=0;
+let history=[],audit=[],historyLoading=false,historyError="",saving=false,weekRevision=0,historyRevision=0;
 const notify=()=>{for(const fn of listeners){try{fn()}catch(_){}}};
 const client=()=>window.ConsultorioAuth?.state.phase==="authorized"?window.ConsultorioAuth.dataClient:null;
 const fields="id,google_event_id,patient_id,scheduled_at,status,fee_snapshot_cents,charge_cents,created_at,updated_at";
@@ -19,11 +19,11 @@ const store={
  get state(){return{records:new Map(records),weekLoading,weekError,
    historyPatientId,history:history.slice(),audit:audit.slice(),historyLoading,historyError,saving};},
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
- clear(){revision++;records=new Map();weekLoading=false;weekError="";
+ clear(){weekRevision++;historyRevision++;records=new Map();weekLoading=false;weekError="";
    historyPatientId=null;history=[];audit=[];historyLoading=false;historyError="";saving=false;notify();},
  async loadForEvents(events){
    const db=client();if(!db||weekLoading)return;
-   const req=++revision;weekLoading=true;weekError="";notify();
+   const req=++weekRevision;weekLoading=true;weekError="";notify();
    try{
      const ids=[...new Set((events||[]).map(e=>e?.id).filter(x=>typeof x==="string"&&x.length))];
      const next=new Map();
@@ -32,15 +32,15 @@ const store={
        if(error)throw error;
        for(const row of data||[])next.set(row.google_event_id,row);
      }
-     if(req!==revision||!client())return;
+     if(req!==weekRevision||!client())return;
      records=next;
-   }catch(_){if(req===revision){records=new Map();weekError=readError;}}
-   finally{if(req===revision){weekLoading=false;notify();}}
+   }catch(_){if(req===weekRevision){records=new Map();weekError=readError;}}
+   finally{if(req===weekRevision){weekLoading=false;notify();}}
  },
  async loadPatientHistory(patientId){
    const db=client();if(!db||!patientId)return;
    if(historyLoading&&historyPatientId===patientId)return;
-   const req=++revision;historyPatientId=patientId;historyLoading=true;historyError="";notify();
+   const req=++historyRevision;historyPatientId=patientId;historyLoading=true;historyError="";notify();
    try{
      const {data,error}=await db.from("session_records").select(fields).eq("patient_id",patientId)
        .order("scheduled_at",{ascending:false}).limit(100);
@@ -53,10 +53,10 @@ const store={
        if(logError)throw logError;
        audits.push(...(log||[]));
      }
-     if(req!==revision||!client())return;
+     if(req!==historyRevision||!client())return;
      history=rows;audit=audits;
-   }catch(_){if(req===revision){history=[];audit=[];historyError=readError;}}
-   finally{if(req===revision){historyLoading=false;notify();}}
+   }catch(_){if(req===historyRevision){history=[];audit=[];historyError=readError;}}
+   finally{if(req===historyRevision){historyLoading=false;notify();}}
  },
  async register(event,patientId,status,correct=false){
    const db=client();
