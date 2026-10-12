@@ -30,7 +30,7 @@ const timeLabel=start=>{
 };
 const longDate=d=>new Intl.DateTimeFormat("pt-BR",{dateStyle:"full",timeZone:"UTC"}).format(new Date(d+"T12:00:00Z"));
 let selectedDate=localToday(),weekStart=startOfWeek(selectedDate),events=[],links=new Map(),rules=new Map();
-let loadedWeek=null,loading=false,saving=false,error="",filter="all",requestNumber=0,hasMore=false;
+let loadedWeek=null,loading=false,saving=false,error="",filter="all",requestNumber=0,hasMore=false,editingSession=null;
 const listeners=new Set(),notify=()=>{for(const fn of listeners){try{fn();}catch(_){}}};
 const safeMessage="Não foi possível carregar a agenda. Tente novamente.";
 const client=()=>window.ConsultorioAuth?.dataClient||null;
@@ -78,6 +78,7 @@ async function loadWeek(force=false){
    const nextRules=new Map((ruleRows||[]).map(r=>[ruleKey(r.match_kind,r.match_value),r.patient_id]));
    if(seq!==requestNumber||!authorized())return;
    events=found;links=map;rules=nextRules;loadedWeek=selectedWeek;hasMore=false;
+   await window.ConsultorioSessions?.loadForEvents(found);
  }catch(e){if(seq===requestNumber){error=e.message||safeMessage;events=[];links=new Map();rules=new Map();loadedWeek=null;}}
  finally{
    if(seq===requestNumber){loading=false;notify();}
@@ -89,7 +90,7 @@ const agenda={
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
  ensure(){if(authorized()&&connected()&&!loading&&loadedWeek!==weekStart&&!error)void loadWeek();},
  async reload(){error="";loadedWeek=null;await loadWeek(true);},
- reset(){++requestNumber;selectedDate=localToday();weekStart=startOfWeek(selectedDate);events=[];links=new Map();rules=new Map();loadedWeek=null;loading=false;saving=false;error="";filter="all";notify();},
+ reset(){++requestNumber;selectedDate=localToday();weekStart=startOfWeek(selectedDate);events=[];links=new Map();rules=new Map();loadedWeek=null;loading=false;saving=false;error="";filter="all";editingSession=null;notify();},
  select(date){if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;const d=new Date(date+"T12:00:00Z");if(!Number.isFinite(d.getTime())||fmtISO(d)!==date)return;selectedDate=date;weekStart=startOfWeek(date);error="";notify();agenda.ensure();},
  shift(days){agenda.select(addDays(selectedDate,days));},
  today(){agenda.select(localToday());},
@@ -214,10 +215,18 @@ const agenda={
      page+='<div class="empty">'+(dayItems.length?'Nenhum compromisso neste filtro.':'Nenhum evento encontrado neste dia do Google Calendar.')+'</div>';
    }
    const patients=window.ConsultorioPatients?.state||{rows:[],loading:false};
+   const sessions=window.ConsultorioSessions?.state||{records:new Map(),weekLoading:true,weekError:"",saving:false};
    const available=patients.rows.filter(p=>p.is_active);
+   const statusLabel={done:"Sessão realizada",missed_charge:"Falta cobrada",
+     missed_nocharge:"Falta sem cobrança",cancelled:"Cancelada",voided:"Registro desfeito"};
+   const currency=cents=>(Number(cents||0)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
    for(const e of visible){
      const matched=effectiveLink(e),associatedId=matched?.patientId,rule=activeRule(e),availableRule=ruleFor(e);
      const patient=patients.rows.find(p=>p.id===associatedId);
+     const savedSession=sessions.records.get(e.id);
+     const billingPatient=savedSession?patients.rows.find(p=>p.id===savedSession.patient_id):null;
+     const canConfirm=!!associatedId&&!!patient&&!sessions.weekLoading&&!sessions.weekError;
+     const future=(new Date(e.start?.dateTime||e.start?.date||0)).getTime()>Date.now();
      const googleTitle=esc(e.summary||"Sem título");
      const time=esc(timeLabel(e.start));
      const missingTitle=(e.summary||'').trim()==='Sem título';
@@ -235,6 +244,28 @@ const agenda={
        +(availableRule?'<button class="btn primary sm" data-action="real-agenda-associate-all" data-event-id="'+esc(e.id)+'" '+(saving||patients.loading||!available.length?'disabled':'')+'>'+(availableRule.kind==='series'?'Vincular todas as semanas':'Vincular mesmo título')+'</button>':'')
        +(links.has(e.id)?'<button class="btn sm" data-action="real-agenda-unlink" data-event-id="'+esc(e.id)+'" '+(saving?'disabled':'')+'>'+(rule?'Remover exceção':'Desvincular esta sessão')+'</button>':'')
        +(rule?'<button class="btn sm" data-action="real-agenda-stop-rule" data-event-id="'+esc(e.id)+'" '+(saving?'disabled':'')+'>Parar vínculo automático</button>':'')
+       +'</div>'
+       +'<div class="real-session-panel">'
+       +(sessions.weekError?'<p role="alert" class="real-agenda-error">'+esc(sessions.weekError)+'</p>':
+          sessions.weekLoading?'<p class="real-session-muted">Buscando registros de atendimento...</p>':
+          '<div class="real-session-heading"><strong>Atendimento e cobrança</strong>'
+          +(savedSession?'<span class="status '+(savedSession.charge_cents>0?'done':'unlinked')+'">'+esc(statusLabel[savedSession.status]||savedSession.status)+'</span>':
+            '<span class="status unlinked">Ainda não registrado</span>')+'</div>'
+          +(savedSession?'<p class="real-session-muted">Paciente registrado: '+esc(billingPatient?.full_name||"Cadastro não disponível")
+            +' · '+(savedSession.charge_cents>0?'Débito: '+currency(savedSession.charge_cents):'Sem débito')
+            +' · Honorário da sessão: '+currency(savedSession.fee_snapshot_cents)+'</p>':
+            '<p class="real-session-muted">'+(canConfirm?
+              'Honorário previsto: '+currency(patient.fee_cents)+'. A cobrança só é criada depois da sua confirmação.':
+              'Vincule o evento a um paciente antes de registrar o atendimento.')+'</p>')
+          +(savedSession||canConfirm?'<button class="btn sm" data-action="real-session-toggle" data-event-id="'+esc(e.id)+'" '+(sessions.saving?'disabled':'')+'>'+
+            (editingSession===e.id?'Fechar opções':savedSession?'Corrigir registro':'Registrar atendimento')+'</button>':'')
+          +(editingSession===e.id&&(savedSession||canConfirm)?
+            '<div class="real-session-actions"><p class="real-session-muted">Selecione o que aconteceu. Um registro para cada compromisso, com histórico de correções.</p>'
+            +[['done','Realizada'],['missed_charge','Falta cobrada'],['missed_nocharge','Falta sem cobrança'],['cancelled','Cancelada']].map(([key,label])=>
+              '<button class="btn '+(key==='done'?'primary':'')+' sm" data-action="real-session-set" data-event-id="'+esc(e.id)+'" data-session-status="'+key+'" '+(sessions.saving||(future&&key!=='cancelled')?'disabled':'')+'>'+label+'</button>').join('')
+            +(savedSession?'<button class="btn sm" data-action="real-session-set" data-event-id="'+esc(e.id)+'" data-session-status="voided" '+(sessions.saving?'disabled':'')+'>Desfazer registro</button>':'')
+            +(future?'<p class="real-session-muted">Confirmações e faltas só podem ser registradas depois do horário da sessão.</p>':'')
+            +'</div>':''))
        +'</div></div></article>';
    }
    if(!available.length){
@@ -247,6 +278,33 @@ const agenda={
    const act=target.dataset.action||"";
    if(target.dataset.agendaDate){agenda.select(target.dataset.agendaDate);return true;}
    if(target.dataset.agendaFilter){agenda.setFilter(target.dataset.agendaFilter);return true;}
+   if(act==="real-session-toggle"){
+     editingSession=editingSession===target.dataset.eventId?null:target.dataset.eventId;
+     notify();return true;
+   }
+   if(act==="real-session-set"){
+     const event=events.find(e=>e.id===target.dataset.eventId);
+     const current=window.ConsultorioSessions?.state.records.get(event?.id);
+     const match=event?effectiveLink(event):null;
+     const patientId=current?.patient_id||match?.patientId;
+     const patient=window.ConsultorioPatients?.state.rows.find(p=>p.id===patientId);
+     if(!event||!patientId||!patient){toast("Vincule a sessão a um paciente cadastrado.");return true;}
+     const status=target.dataset.sessionStatus;
+     const names={done:"realizada",missed_charge:"falta cobrada",missed_nocharge:"falta sem cobrança",
+       cancelled:"cancelada",voided:"registro desfeito"};
+     if(!names[status])return true;
+     const charged=status==="done"||status==="missed_charge";
+     const fee=current?.fee_snapshot_cents??patient.fee_cents;
+     const amount=(Number(fee)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+     const question=(current?"CORRIGIR o registro desta sessão para ":"REGISTRAR esta sessão como ")+names[status]+
+       " para "+patient.full_name+"? "+
+       (charged?"Será registrado um débito de "+amount+".":"Esta situação ficará sem débito.")+
+       " O Google Calendar não será alterado.";
+     if(!window.confirm(question))return true;
+     const result=await window.ConsultorioSessions.register(event,patientId,status,!!current);
+     if(result.ok)editingSession=null;
+     toast(result.message);notify();return true;
+   }
    if(!act.startsWith("real-agenda-"))return false;
    if(act==="real-agenda-prev"){agenda.shift(-7);return true;}
    if(act==="real-agenda-next"){agenda.shift(7);return true;}
