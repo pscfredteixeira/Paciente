@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 6.3
+# Meu Consultório — Sprint 7
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -8,13 +8,15 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Pacientes:** cadastro privado, busca, edição, valor de sessão, frequência, arquivamento e reativação. Registros no Supabase com RLS.
 
-**Agenda:** compromissos da agenda principal do Google Calendar, com navegação por semanas e dias, consulta em modo somente leitura e vínculo aos pacientes privados. Agora há dois tipos de associação: **Só esta sessão** e **Vincular todas as semanas** para séries recorrentes. Para eventos separados com o mesmo título específico, há **Vincular mesmo título** com confirmação. As regras ficam salvas no Supabase e se aplicam automaticamente às semanas anteriores e futuras. O Google Calendar não é alterado.
+**Agenda:** compromissos reais do Google Calendar, vínculos semanais automáticos e confirmação de atendimento. Você pode registrar **sessão realizada**, **falta cobrada**, **falta sem cobrança** ou **cancelamento**. Confirmar uma sessão cobrada cria **um único débito real** com o honorário congelado daquela sessão. Alterações posteriores são auditadas. O Google Calendar continua somente leitura.
+
+**Pacientes — histórico real:** abrir o cadastro permite ver os últimos atendimentos, débitos e correções (sem pagamentos ainda).
 
 **Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
 ## Partes que ainda são demonstração
 
-**Início, Financeiro e Relatórios:** dados inventados, exibidos apenas para prototipagem. Nenhuma consulta real marcada como realizada, nenhum débito ou pagamento real é lançado. A cobrança automática após confirmar uma sessão será implementada em um sprint posterior, com controle contra duplicações.
+**Início, Financeiro e Relatórios:** continuam exibindo dados fictícios no protótipo. Os **débitos reais** já são criados e exibidos na Agenda e no histórico do paciente; **pagamentos, saldos após recebimentos e Pix** ainda não estão implementados. Não interprete a tela Financeiro demonstrativa como valores reais.
 
 ## Código modular
 
@@ -27,6 +29,7 @@ assets/
   patients.js
   patients-ui.js
   calendar.js
+  sessions.js
   agenda-real.js
   styles.css
 supabase/migrations/
@@ -34,12 +37,15 @@ supabase/migrations/
   20261011191842_sprint_05_patients_private.sql
   20261011192348_sprint_05_limit_patient_columns.sql
   20261011225800_sprint_06_2_calendar_event_links.sql
+  20261011232500_sprint_06_3_calendar_series_rules.sql
+  20261012001500_sprint_07_sessions_debits_and_audit.sql
 docs/
   ARQUITETURA.md
   SPRINT_04_ACESSO.md
   SPRINT_05_PACIENTES.md
   SPRINT_06_2_AGENDA.md
   SPRINT_06_3_SERIES.md
+  SPRINT_07_SESSOES.md
 ```
 
 ## Segurança
@@ -48,8 +54,8 @@ O repositório e os arquivos de frontend do GitHub Pages são públicos. **Não 
 
 Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). Recomenda-se ativar essa opção e revisar configurações de cadastro público e MFA. A autorização Google em modo Testando pode expirar, exigindo nova conexão.
 
-[Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md).
+[Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md) · [Sessões e débitos reais](./docs/SPRINT_07_SESSOES.md).
 
 ## Próxima etapa
 
-Validar a Agenda Google no navegador; depois criar sessões reais e lançamentos financeiros persistentes, evitando débitos duplicados.
+Validar a confirmação de sessões no navegador e então implementar o Sprint 8: pagamentos reais, saldos devedores, histórico de recebimentos e conciliação Pix.
