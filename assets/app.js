@@ -18,7 +18,7 @@ const statusLabel=s=>({scheduled:'A confirmar',done:'Realizada',missed:'Falta',c
 const statusBadge=(s)=>`<span class="status ${s==='scheduled'?'pending':s}"><span class="dot"></span>${statusLabel(s)}</span>`;
 const apptBadge=a=>statusBadge(a.patientId?a.status:'unlinked');
 const fmtDate=d=>new Intl.DateTimeFormat('pt-BR',{day:'numeric',month:'short',timeZone:'UTC'}).format(new Date(d+'T12:00:00Z'));
-const headings={home:['Visão geral · demonstração','Seu consultório, em ordem.','Nesta tela, sessões e valores ainda são exemplos. Pacientes são cadastrados em sua área privada.'],agenda:['Agenda real','Seus compromissos, em um só lugar.','Eventos do Google Calendar, com associação privada aos pacientes cadastrados.'],patients:['Pacientes','Tudo organizado por pessoa.','Cadastros administrativos privados: nome, frequência e valor da sessão.'],finance:['Financeiro · demonstração','Cada valor no seu lugar.','Saldos e pagamentos fictícios. Ainda não há lançamentos financeiros reais.'],reports:['Relatórios · demonstração','Uma visão mais ampla.','Indicadores fictícios até conectar sessões e pagamentos reais.'],settings:['Ajustes','Seu espaço, suas regras.','Acesso seguro, Google Calendar em leitura e outras integrações futuras.']};
+const headings={home:['Visão geral · demonstração','Seu consultório, em ordem.','Nesta tela, sessões e valores ainda são exemplos. Pacientes são cadastrados em sua área privada.'],agenda:['Agenda real','Seus compromissos, em um só lugar.','Google Calendar com vínculos automáticos, confirmação de sessões e débitos reais.'],patients:['Pacientes','Tudo organizado por pessoa.','Cadastros administrativos privados: nome, frequência e valor da sessão.'],finance:['Financeiro · demonstração','Cada valor no seu lugar.','Saldos e pagamentos fictícios. Ainda não há lançamentos financeiros reais.'],reports:['Relatórios · demonstração','Uma visão mais ampla.','Indicadores fictícios até conectar sessões e pagamentos reais.'],settings:['Ajustes','Seu espaço, suas regras.','Acesso seguro, Google Calendar em leitura e outras integrações futuras.']};
 const navs=[['home','home','Início'],['agenda','calendar','Agenda'],['patients','users','Pacientes'],['finance','wallet','Financeiro'],['reports','chart','Relatórios'],['settings','settings','Ajustes']];
 function openView(v){view=v;selectedPatient=null;modal=null;query='';filter='all';render();if(v==='agenda'&&window.ConsultorioAuth?.enabled)window.ConsultorioRealAgenda?.ensure();window.scrollTo({top:0,behavior:'instant'});}
 const $=selector=>document.querySelector(selector);
@@ -108,13 +108,13 @@ function secureLoginScreen() {
     </div></section></div>`;
 }
 function loginScreen(){return `<div class="login-screen"><section class="login-feature"><div class="brand"><span class="brand-mark">${I('layers')}</span><div><div class="brand-title">Meu Consultório</div><div class="brand-caption">Gestão particular</div></div></div><div><div class="login-quote">Um espaço reservado para cuidar da sua rotina.</div><p>Consultas, pacientes e finanças reunidos em uma experiência simples e privativa.</p></div><small style="color:#a7c3b8">Protótipo de identidade visual · não autentica contas</small></section><section class="login-form"><div class="login-box"><span class="login-lock">${I('lock')}</span><h1>Bem-vindo de volta.</h1><p>Esta tela demonstra o futuro acesso exclusivo à sua conta.</p><label class="field">Seu e-mail<input type="email" placeholder="seu@email.com" disabled></label><label class="field">Sua senha<input type="password" placeholder="••••••••" disabled></label><button class="btn primary" data-action="exit-login">Explorar a demonstração ${I('arrow')}</button><p style="font-size:11px;margin-top:21px">Na versão real, haverá autenticação segura. Os campos estão desativados neste protótipo.</p></div></section></div>`}
-function render(){document.title='Meu Consultório — Sprint 6.2';document.getElementById('app').innerHTML=window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized'?secureLoginScreen():lockPreview?loginScreen():shell(({home:renderHome,agenda:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioRealAgenda.render({head,I,esc}):renderAgenda),patients:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioPatientsUI.render({head,I,esc,money,query}):renderPatients),finance:renderFinance,reports:renderReports,settings:renderSettings})[view]());}
+function render(){document.title='Meu Consultório — Sprint 7';document.getElementById('app').innerHTML=window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized'?secureLoginScreen():lockPreview?loginScreen():shell(({home:renderHome,agenda:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioRealAgenda.render({head,I,esc}):renderAgenda),patients:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioPatientsUI.render({head,I,esc,money,query}):renderPatients),finance:renderFinance,reports:renderReports,settings:renderSettings})[view]());}
 function updateAppointment(status,charge=false){const a=appointments.find(x=>x.id===modal.id);if(!a||!a.patientId)return;if(a.chargeId)ledger=ledger.filter(x=>x.id!==a.chargeId);a.chargeId=null;a.status=status;if(charge){a.chargeId='new'+sequence++;ledger.push({id:a.chargeId,date:a.date,patientId:a.patientId,type:'charge',amount:byPatient(a.patientId).price,description:status==='missed'?'Falta cobrada · '+fmtDate(a.date):'Sessão · '+fmtDate(a.date)});}modal=null;render();showToast(status==='done'?'Sessão confirmada. Débito simulado registrado.':status==='scheduled'?'Sessão reaberta e lançamento simulado revertido.':status==='missed'?'Falta registrada na demonstração.':'Cancelamento registrado na demonstração.');}
 window.addEventListener('click',e=>{
  const target=e.target.closest('button,[data-close]');if(!target)return;
  if(window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized' && target.dataset.action!=='auth-signout')return;
  if(view==='agenda' && window.ConsultorioAuth?.enabled && window.ConsultorioRealAgenda
-    && (target.dataset.agendaDate||target.dataset.agendaFilter||target.dataset.action?.startsWith('real-agenda-'))){
+    && (target.dataset.agendaDate||target.dataset.agendaFilter||target.dataset.action?.startsWith('real-agenda-')||target.dataset.action?.startsWith('real-session-'))){
    void window.ConsultorioRealAgenda.click(target,render,showToast);return;
  }
  if(target.dataset.action?.startsWith('calendar-')&&window.ConsultorioAuth?.enabled){
@@ -188,7 +188,7 @@ window.addEventListener('submit',e=>{
 });
 window.ConsultorioAuth?.subscribe(()=>{
  if(window.ConsultorioAuth.state.phase==='authorized'){window.ConsultorioPatients?.load();if(!window.ConsultorioCalendar?.state.loaded)window.ConsultorioCalendar?.status();}
- else {window.ConsultorioPatients?.clear();window.ConsultorioPatientsUI?.reset();window.ConsultorioCalendar?.clear();window.ConsultorioRealAgenda?.reset();}
+ else {window.ConsultorioPatients?.clear();window.ConsultorioPatientsUI?.reset();window.ConsultorioCalendar?.clear();window.ConsultorioRealAgenda?.reset();window.ConsultorioSessions?.clear();}
  render();
 });
 window.ConsultorioPatients?.subscribe(()=>{
@@ -196,6 +196,9 @@ window.ConsultorioPatients?.subscribe(()=>{
 });
 window.ConsultorioRealAgenda?.subscribe(()=>{
  if(view==='agenda'&&window.ConsultorioAuth?.state.phase==='authorized')render();
+});
+window.ConsultorioSessions?.subscribe(()=>{
+ if((view==='agenda'||view==='patients')&&window.ConsultorioAuth?.state.phase==='authorized')render();
 });
 let calendarWasConnected=false;
 window.ConsultorioCalendar?.subscribe(()=>{
