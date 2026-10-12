@@ -19,7 +19,7 @@
         && x.full_name.toLocaleLowerCase("pt-BR").includes(String(query || "").toLocaleLowerCase("pt-BR")));
       const nActive = state.rows.filter(x => x.is_active).length;
       let output = head("patients", "<button class='btn primary' data-action='real-patient-new'>" + I("plus") + " Novo paciente</button>");
-      output += "<div class='notice'>" + I("shield") + "<div><strong>Cadastros privados</strong><p>Dados administrativos protegidos no Supabase. Agenda, Financeiro e extratos apresentados em outras telas ainda são simulações e não usam estes cadastros.</p></div></div>";
+      output += "<div class='notice'>" + I("shield") + "<div><strong>Cadastros privados</strong><p>Dados administrativos protegidos no Supabase. A Agenda usa compromissos reais; o Financeiro e os Relatórios gerais ainda são demonstrações.</p></div></div>";
       if (state.loading && !state.initialized) return output + "<section class='card hcard'><div class='empty'>Carregando seus pacientes...</div></section>";
       if (state.error) return output + "<section class='card hcard'><div class='notice orange' role='alert'>" + I("info") + "<div>" + esc(state.error) + "</div></div><button class='btn' data-action='real-patient-reload'>Tentar novamente</button></section>";
       if (editor === "new" || editing) {
@@ -45,7 +45,43 @@
           + "<div class='patient-form-actions'><button class='btn' data-action='real-patient-back'>Voltar</button>"
           + "<button class='btn' data-action='real-patient-edit' data-id='" + esc(row.id) + "'>Editar</button>"
           + "<button class='btn " + (row.is_active ? "soft" : "primary") + "' data-action='real-patient-toggle' data-id='" + esc(row.id) + "'" + (state.busy ? " disabled" : "") + ">" + (row.is_active ? "Arquivar" : "Reativar") + "</button></div>"
-          + "<div class='note-panel'>" + I("info") + "<span>Este cadastro ainda não gera cobranças. Sessões e pagamentos reais serão conectados posteriormente.</span></div></section>";
+          + "<div class='note-panel'>" + I("info") + "<span>As sessões confirmadas na Agenda geram débitos reais. Pagamentos recebidos ainda não estão implementados.</span></div></section>";
+        const sessionState=window.ConsultorioSessions?.state||{historyPatientId:null,history:[],audit:[],historyLoading:false,historyError:""};
+        const statuses={done:"Realizada",missed_charge:"Falta cobrada",missed_nocharge:"Falta sem cobrança",cancelled:"Cancelada",voided:"Registro desfeito"};
+        const amount=cents=>money(Number(cents||0)/100);
+        const fmtDateTime=raw=>{const d=new Date(raw);return Number.isFinite(d.getTime())?
+          d.toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo",dateStyle:"short",timeStyle:"short"}):"Data indisponível";};
+        output += "<section class='card hcard real-patient-sessions'><div class='card-head'><h2>Sessões e débitos reais</h2><span class='status done'>Supabase</span></div>"
+          +"<p class='subhead'>Registros dos atendimentos confirmados. Os valores representam débitos, não pagamentos recebidos.</p>";
+        if(sessionState.historyLoading||sessionState.historyPatientId!==row.id){
+          output+="<div class='real-agenda-loading' role='status'>Carregando histórico privado de sessões...</div>";
+        }else if(sessionState.historyError){
+          output+="<div class='notice orange' role='alert'>"+I("info")+"<div>"+esc(sessionState.historyError)+"</div></div>"
+            +"<button class='btn sm' data-action='real-patient-history-reload' data-id='"+esc(row.id)+"'>Tentar novamente</button>";
+        }else if(!sessionState.history.length){
+          output+="<div class='empty'>Nenhum atendimento registrado para este paciente. Confirme uma sessão na Agenda para iniciar o histórico.</div>";
+        }else{
+          output+="<p class='real-patient-history-count'>Últimos "+sessionState.history.length+" atendimento"+(sessionState.history.length===1?"":"s")+
+           " registrado"+(sessionState.history.length===1?"":"s")+".</p>";
+          for(const entry of sessionState.history){
+            const changes=sessionState.audit.filter(a=>a.session_id===entry.id);
+            output+="<article class='real-patient-history-item'><div class='real-patient-history-head'>"
+              +"<strong>"+esc(fmtDateTime(entry.scheduled_at))+"</strong>"
+              +"<span class='status "+(entry.charge_cents>0?"done":"unlinked")+"'>"+esc(statuses[entry.status]||entry.status)+"</span></div>"
+              +"<p>Honorário da sessão: "+amount(entry.fee_snapshot_cents)
+              +" · <strong>"+(entry.charge_cents>0?"Débito: "+amount(entry.charge_cents):"Sem débito")+"</strong></p>";
+            if(changes.length>1){
+              output+="<details class='real-patient-history-audit'><summary>Histórico de alterações ("+(changes.length-1)+")</summary><ol>"
+                +changes.map(a=>"<li>"+esc(fmtDateTime(a.occurred_at))+" · "
+                  +esc(a.reason==="initial"?"Registro inicial":"Correção")+": "
+                  +esc(statuses[a.new_status]||a.new_status)+" · "
+                  +(a.new_charge_cents>0?"Débito de "+amount(a.new_charge_cents):"Sem débito")+"</li>").join("")
+                +"</ol></details>";
+            }
+            output+="</article>";
+          }
+        }
+        output+="</section>";
       }
       const n = selected.length;
       output += "<section class='card table-card'><div class='real-list-header'><strong>Seus cadastros</strong><span class='muted'>" + nActive + " ativo" + (nActive === 1 ? "" : "s") + "</span></div>"
@@ -59,7 +95,7 @@
         + "</section><p class='foot-note'>Os registros ficam no banco protegido, não no GitHub. Cadastros arquivados continuam preservados.</p>";
       return output;
     },
-    select(id, render) { chosen = id; editor = null; render(); },
+    select(id, render) { chosen = id; editor = null; render();void window.ConsultorioSessions?.loadPatientHistory(id); },
     async handleClick(button, render, notify) {
       const act = button.dataset.action || "";
       if (!act.startsWith("real-patient-")) return false;
@@ -69,6 +105,7 @@
       else if (act === "real-patient-edit") { chosen = button.dataset.id; editor = chosen; render(); }
       else if (act === "real-patient-filter") { filter = button.dataset.filterValue || "active"; render(); }
       else if (act === "real-patient-reload") { await store()?.load(true); }
+      else if (act === "real-patient-history-reload") { if(chosen)await window.ConsultorioSessions?.loadPatientHistory(chosen); }
       else if (act === "real-patient-toggle") {
         const id = button.dataset.id;
         const row = store()?.state.rows.find(x => x.id === id);
