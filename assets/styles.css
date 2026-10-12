@@ -129,3 +129,24 @@
 .real-agenda-linkcontrols .btn{white-space:normal;line-height:1.25;max-width:100%;text-align:center}
 @media(max-width:760px){.real-agenda-linkcontrols{gap:8px}.real-agenda-linkcontrols label{flex-basis:100%}.real-agenda-linkcontrols .btn{flex:1 1 42%;min-height:45px}}
 @media(max-width:375px){.real-agenda-linkcontrols .btn{flex:1 1 100%}}
+
+/* Sprint 7 — registros reais de atendimento, compacto no celular. */
+.real-session-panel{margin-top:17px;padding:14px;background:#f8f6fc;border:1px solid #e5ddf4;border-radius:13px;min-width:0}
+.real-session-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:9px}
+.real-session-heading strong{font-size:13px;color:#2e1b50}
+.real-session-heading .status{max-width:100%}
+.real-session-muted{font-size:12px;line-height:1.55;color:#625b71;margin:8px 0 11px;overflow-wrap:anywhere}
+.real-session-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px solid #e5ddf4;margin-top:14px;padding-top:13px}
+.real-session-actions p{width:100%;margin:0 0 2px}
+.real-session-actions .btn{min-height:40px;max-width:100%;white-space:normal;text-align:center;line-height:1.2}
+.real-patient-sessions{margin-top:16px}
+.real-patient-history-count{font-size:12px;color:#615c6d;margin:12px 0}
+.real-patient-history-item{padding:14px 0;border-top:1px solid #eee9f4}
+.real-patient-history-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.real-patient-history-head strong{font-size:14px}
+.real-patient-history-item p{font-size:12px;line-height:1.5;margin:8px 0;color:#555}
+.real-patient-history-audit{border-top:1px dashed #ddd2ec;margin-top:11px;padding-top:9px;font-size:12px}
+.real-patient-history-audit summary{cursor:pointer;color:#4b287f;font-weight:750;padding:4px 0}
+.real-patient-history-audit ol{padding-left:20px;line-height:1.65;color:#555}
+@media(max-width:760px){.real-session-panel{padding:12px}.real-session-actions .btn{flex:1 1 42%;min-height:44px}.real-patient-history-head{align-items:flex-start}}
+@media(max-width:375px){.real-session-actions .btn{flex:1 1 100%}}
