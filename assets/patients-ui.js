@@ -130,7 +130,7 @@
       const cents = Number(parts[0]) * 100 + Number((parts[1] || "").padEnd(2,"0"));
       const id = editor === "new" ? null : editor;
       const result = await store().save({ full_name: name, fee_cents: cents, cadence }, id);
-      if (result.ok) { editor = null; chosen = result.id; render(); notify(id ? "Cadastro atualizado." : "Paciente cadastrado."); }
+      if (result.ok) { editor = null; chosen = result.id; render(); void window.ConsultorioSessions?.loadPatientHistory(result.id); notify(id ? "Cadastro atualizado." : "Paciente cadastrado."); }
       else notify(result.message);
       return true;
     }
