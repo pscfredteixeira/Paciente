@@ -87,7 +87,9 @@ const store={
      }
      return {ok:true,unchanged:!!data.unchanged,message:data.unchanged?
        "Esta sessão já estava registrada. Não foi criado outro débito.":
-       correct?"Registro corrigido. O histórico e o débito foram atualizados.":"Sessão salva e débito registrado conforme a regra escolhida."};
+       correct?(data.charge_cents>0?
+         "Registro corrigido. O débito e o histórico foram atualizados.":"Registro corrigido. Esta sessão está sem débito e a alteração foi registrada."):
+         (data.charge_cents>0?"Atendimento registrado e débito criado uma única vez.":"Atendimento registrado sem gerar débito.")};
    }catch(e){return {ok:false,message:safeMsg(e)};}
    finally{saving=false;notify();}
  }
