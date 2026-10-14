@@ -330,3 +330,22 @@
  .real-statement-row .btn{width:100%}
  .real-statement-results-head{align-items:flex-start}
 }
+
+
+/* Sprint 11 — importação OFX no próprio aparelho. */
+.real-statement-ofx-info{
+ margin:0 0 15px;padding:13px 14px;
+ border:1px solid #ded5ee;border-radius:11px;
+ background:#f6f2fc;color:#413557;
+}
+.real-statement-ofx-info strong{display:block;font-size:13px;line-height:1.45}
+.real-statement-ofx-info p{
+ font-size:12px;line-height:1.58;color:#615775;
+ margin:7px 0 0;overflow-wrap:anywhere
+}
+.real-statement-fileinfo{align-items:flex-start}
+@media(max-width:480px){
+ .real-statement-ofx-info{padding:12px}
+ .real-statement-ofx-info strong{font-size:12px}
+ .real-statement-fileinfo{flex-direction:column;gap:4px}
+}
