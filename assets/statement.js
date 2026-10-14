@@ -273,9 +273,14 @@ const stmt={
      +'<label><input type="checkbox" data-statement-option="generic"'+(includeGeneric?' checked':'')+'> Incluir outras entradas positivas, mesmo sem a palavra Pix (revisar com cuidado)</label>'
      +'<label><input type="checkbox" data-statement-option="reference"'+(saveReference?' checked':'')+'> Salvar o identificador bancário ao confirmar (opcional; pode não ser o EndToEndId do Pix)</label>'
      +'</div>';
-   const matches=suggestedMatches(),eligible=matches.filter(r=>r.candidates.length||completed.has(r.rowIndex));
+   const matches=suggestedMatches(),eligible=matches.filter(r=>r.candidates.length||completed.has(r.rowIndex)),
+     unmatched=matches.filter(r=>!r.candidates.length&&!completed.has(r.rowIndex)),
+     ambiguous=eligible.filter(r=>r.candidates.length>1&&!completed.has(r.rowIndex)).length;
    out+='<div class="real-statement-results"><div class="real-statement-results-head"><strong>Comparação de lançamentos</strong>'
-     +'<span>'+eligible.length+' possível'+(eligible.length===1?'':'is')+' correspondência'+(eligible.length===1?'':'s')+'</span></div>';
+     +'<span>'+eligible.length+' com candidato'+(eligible.length===1?'':'s')+' · '
+       +unmatched.length+' sem correspondência'+(ambiguous?' · '+ambiguous+' ambíguo'+(ambiguous===1?'':'s'):'')+'</span></div>'
+     +(ambiguous?'<p class="real-statement-alert">Há '+ambiguous+' lançamento'+(ambiguous===1?'':'s')+
+       ' com mais de um pagamento possível. Confira paciente, valor e data no banco antes de escolher.</p>':'');
    if(fin.loading)out+='<p class="real-session-muted">Atualizando pagamentos para comparar...</p>';
    if(!eligible.length)out+='<div class="real-statement-empty">Nenhuma correspondência encontrada. Confira as colunas, o período e os valores. Só são sugeridos Pix já registrados com o mesmo valor e diferença máxima de três dias.</div>';
    const used=new Set([...chosen.values()]);
@@ -303,6 +308,17 @@ const stmt={
      out+='</article>';
    }
    if(eligible.length>MAX_VISIBLE)out+='<p class="real-session-muted">Exibindo as primeiras '+MAX_VISIBLE+' linhas correspondentes. Exporte um período mais curto para as demais.</p>';
+   if(unmatched.length){
+     out+='<details class="real-statement-unmatched"><summary>'+unmatched.length+' entrada'+(unmatched.length===1?'':'s')+
+       ' sem pagamento Pix correspondente · Ver detalhes</summary>'
+       +'<p class="real-session-muted">Essas entradas do extrato não têm um Pix não conferido com valor igual e data próxima (até 3 dias). '
+       +'Não crie nem confirme pagamentos sem conferir o beneficiário e o crédito no banco. Pode ser um Pix já conferido ou um recebimento ainda não registrado.</p>'
+       +unmatched.slice(0,20).map(r=>'<div class="real-statement-unmatched-row">'
+         +'<strong>'+brl(r.cents)+'</strong><span>'+esc(r.day.split("-").reverse().join("/"))+'</span>'
+         +'<small>'+esc(r.description||r.type||"Entrada sem descrição")+'</small></div>').join('')
+       +(unmatched.length>20?'<p class="real-session-muted">Mostrando 20 de '+unmatched.length+' entradas sem correspondência. Exporte um período menor para revisar todas.</p>':'')
+       +'</details>';
+   }
    return out+'</div><button class="btn sm" data-action="real-statement-clear">Descartar extrato importado</button></div></section>';
  },
  async click(target,render,toast){
