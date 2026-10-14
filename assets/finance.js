@@ -4,7 +4,7 @@
 "use strict";
 const listeners=new Set();
 let sessions=[],payments=[],audit=[],loading=false,initialized=false,error="",saving=false,revision=0;
-let filter="all",editing=false,formDraft=null,pendingRequestId=null,editingPixId=null,pixRefDraft="",reportMonths=6;
+let filter="all",editing=false,formDraft=null,pendingRequestId=null,editingPixId=null,pixRefDraft="",pixExpanded=false,reportMonths=6;
 const signal=()=>{for(const fn of listeners){try{fn()}catch(_){}}};
 const auth=()=>window.ConsultorioAuth?.state.phase==="authorized"?window.ConsultorioAuth?.dataClient:null;
 const patients=()=>window.ConsultorioPatients?.state.rows||[];
@@ -105,7 +105,7 @@ const finance={
  get state(){return{sessions:sessions.slice(),payments:payments.slice(),audit:audit.slice(),
   loading,initialized,error,saving,filter,editing,editingPixId,reportMonths,summary:allSummary()};},
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
- clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;filter="all";editingPixId=null;pixRefDraft="";reportMonths=6;resetForm();signal();},
+ clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;filter="all";editingPixId=null;pixRefDraft="";pixExpanded=false;reportMonths=6;resetForm();signal();},
  ensure(){if(auth()&&!initialized&&!loading&&!error)void finance.load();},
  async load(force=false){
    const db=auth();if(!db||loading||saving||(initialized&&!force))return;
@@ -266,32 +266,51 @@ const finance={
    }
    out+='</section>';
    const allPix=payments.filter(p=>p.method==="Pix"&&!p.voided_at)
-     .sort((a,b)=>b.paid_on.localeCompare(a.paid_on)||b.created_at.localeCompare(a.created_at));
+     .sort((a,b)=>(!!a.pix_verified_at)-(!!b.pix_verified_at)
+       ||b.paid_on.localeCompare(a.paid_on)
+       ||b.created_at.localeCompare(a.created_at));
    const unchecked=allPix.filter(p=>!p.pix_verified_at).length;
-   out+='<section id="real-pix-review" class="card hcard real-pix-review"><div class="card-head"><h2>Conferência manual de Pix</h2>'
-     +'<span class="status '+(unchecked?'pending':'done')+'">'+unchecked+' não conferido'+(unchecked===1?'':'s')+'</span></div>'
-     +'<p class="subhead">Confira o valor e a entrada no extrato do seu banco ANTES de marcar um Pix como conferido. O aplicativo não acessa seu banco nem valida comprovantes. O saldo inclui todos os pagamentos registrados, mesmo os Pix ainda não conferidos.</p>';
-   if(!allPix.length)out+='<div class="empty">Nenhum recebimento Pix registrado.</div>';
-   for(const p of allPix.slice(0,200)){
-     const who=getPatient(p.patient_id),verified=!!p.pix_verified_at;
-     out+='<div class="real-pix-item"><div class="real-pix-information"><strong>'+esc(who?.full_name||"Paciente indisponível")+' · '+brl(p.amount_cents)+'</strong>'
-       +'<small>'+esc(p.paid_on.split("-").reverse().join("/"))+' · '+esc(pixStatus(p))+'</small>'
-       +(verified?'<small>Conferido: '+esc(new Date(p.pix_verified_at).toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo",dateStyle:"short",timeStyle:"short"}))
-         +(p.pix_reference?' · Referência: '+esc(p.pix_reference):'')+'</small>':'')
-       +'</div><div class="real-pix-buttons">'
-       +(verified?'<button class="btn sm" data-action="real-pix-undo" data-payment-id="'+esc(p.id)+'"'+(saving?' disabled':'')+'>Desfazer conferência</button>':
-         '<button class="btn primary sm" data-action="real-pix-open" data-payment-id="'+esc(p.id)+'"'+(saving?' disabled':'')+'>Conferir Pix</button>')
-       +'</div></div>';
-     if(editingPixId===p.id&&!verified){
-       out+='<div class="real-pix-editor">'
-         +'<label class="field">Identificador da transação (opcional)'
-         +'<input id="real-pix-reference" data-payment-id="'+esc(p.id)+'" type="text" inputmode="text" maxlength="100" autocomplete="off" spellcheck="false" placeholder="EndToEndId ou identificação no banco" value="'+esc(pixRefDraft)+'"></label>'
-         +'<p class="real-session-muted">A conferência é uma marcação manual, não uma confirmação bancária feita pelo aplicativo.</p>'
-         +'<div class="patient-form-actions"><button class="btn primary sm" data-action="real-pix-verify" data-payment-id="'+esc(p.id)+'"'+(saving?' disabled':'')+'>Confirmar que conferi no banco</button>'
-         +'<button class="btn sm" data-action="real-pix-cancel">Cancelar</button></div></div>';
+   const hasPix=allPix.length>0;
+   const pixBadge=!hasPix?"Nenhum Pix":unchecked?
+     unchecked+" pendente"+(unchecked===1?"":"s"):"Todos conferidos";
+   out+='<section id="real-pix-review" class="card hcard real-pix-review'+(pixExpanded&&hasPix?' is-expanded':' is-compact')+'">'
+     +'<div class="card-head real-pix-head"><h2>Conferência de Pix</h2>'
+     +'<span class="status '+(unchecked?'pending':hasPix?'done':'unlinked')+'">'+pixBadge+'</span></div>';
+   if(!hasPix){
+     out+='<p class="real-pix-intro">Nenhum pagamento Pix registrado ainda. Quando você lançar um recebimento por Pix, ele aparecerá aqui.</p>'
+       +'<button class="btn sm" data-action="real-finance-new">Registrar pagamento Pix</button>';
+   }else{
+     out+='<p class="real-pix-intro">'+allPix.length+' recebimento'+(allPix.length===1?'':'s')
+       +' Pix registrado'+(allPix.length===1?'':'s')
+       +'. A conferência é manual e não consulta sua conta bancária.</p>'
+       +'<button class="btn sm real-pix-toggle" data-action="real-pix-toggle" aria-controls="real-pix-list" aria-expanded="'+(pixExpanded?'true':'false')+'">'
+       +(pixExpanded?'Ocultar lançamentos':'Ver lançamentos')+' <span aria-hidden="true">'+(pixExpanded?'▴':'▾')+'</span></button>';
+     if(pixExpanded){
+       out+='<div id="real-pix-list" class="real-pix-expanded">'
+         +'<p class="real-pix-guidance">Antes de conferir, verifique a entrada, o valor e a data no extrato do banco. Isso não altera o saldo do paciente.</p>';
+       for(const p of allPix.slice(0,200)){
+         const who=getPatient(p.patient_id),verified=!!p.pix_verified_at;
+         out+='<div class="real-pix-item"><div class="real-pix-information"><strong>'+esc(who?.full_name||"Paciente indisponível")+' · '+brl(p.amount_cents)+'</strong>'
+           +'<small>'+esc(p.paid_on.split("-").reverse().join("/"))+' · '+esc(pixStatus(p))+'</small>'
+           +(verified?'<small>Conferido: '+esc(new Date(p.pix_verified_at).toLocaleString("pt-BR",{timeZone:"America/Sao_Paulo",dateStyle:"short",timeStyle:"short"}))
+             +(p.pix_reference?' · Referência: '+esc(p.pix_reference):'')+'</small>':'')
+           +'</div><div class="real-pix-buttons">'
+           +(verified?'<button class="btn sm" data-action="real-pix-undo" data-payment-id="'+esc(p.id)+'"'+(saving?' disabled':'')+'>Desfazer conferência</button>':
+             '<button class="btn primary sm" data-action="real-pix-open" data-payment-id="'+esc(p.id)+'"'+(saving?' disabled':'')+'>Conferir Pix</button>')
+           +'</div></div>';
+         if(editingPixId===p.id&&!verified){
+           out+='<div class="real-pix-editor">'
+             +'<label class="field">Identificador da transação (opcional)'
+             +'<input id="real-pix-reference" data-payment-id="'+esc(p.id)+'" type="text" inputmode="text" maxlength="100" autocomplete="off" spellcheck="false" placeholder="EndToEndId ou identificação no banco" value="'+esc(pixRefDraft)+'"></label>'
+             +'<p class="real-session-muted">A conferência é uma marcação manual, não uma confirmação bancária feita pelo aplicativo.</p>'
+             +'<div class="patient-form-actions"><button class="btn primary sm" data-action="real-pix-verify" data-payment-id="'+esc(p.id)+'"'+(saving?' disabled':'')+'>Confirmar que conferi no banco</button>'
+             +'<button class="btn sm" data-action="real-pix-cancel">Cancelar</button></div></div>';
+         }
+       }
+       if(allPix.length>200)out+='<p class="real-session-muted">Exibindo os 200 Pix mais recentes; os anteriores continuam preservados no banco.</p>';
+       out+='</div>';
      }
    }
-   if(allPix.length>200)out+='<p class="real-session-muted">Exibindo os 200 Pix mais recentes; os anteriores continuam preservados no banco.</p>';
    return out+'</section><p class="foot-note">Os valores são calculados a partir dos registros reais. Créditos são considerados automaticamente no saldo, sem alterar as sessões. Conferência Pix é exclusivamente manual.</p>';
  },
  renderReports({head,I,esc}){
@@ -433,7 +452,15 @@ const finance={
    if(!act.startsWith("real-finance-")&&!act.startsWith("real-pix-")&&!act.startsWith("real-report-"))return false;
    if(act==="real-report-period"){reportMonths=button.dataset.reportMonths==="12"?12:6;render();return true;}
    if(act==="real-pix-jump"){
-     document.getElementById("real-pix-review")?.scrollIntoView({behavior:"smooth",block:"start"});return true;
+     pixExpanded=true;
+     render();
+     document.getElementById("real-pix-review")?.scrollIntoView({behavior:"smooth",block:"start"});
+     return true;
+   }
+   if(act==="real-pix-toggle"){
+     pixExpanded=!pixExpanded;
+     if(!pixExpanded){editingPixId=null;pixRefDraft="";}
+     render();return true;
    }
    if(act==="real-pix-open"){
      const item=payments.find(p=>p.id===button.dataset.paymentId&&!p.voided_at&&p.method==="Pix");
