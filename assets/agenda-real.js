@@ -302,7 +302,7 @@ const agenda={
        " O Google Calendar não será alterado.";
      if(!window.confirm(question))return true;
      const result=await window.ConsultorioSessions.register(event,patientId,status,!!current);
-     if(result.ok)editingSession=null;
+     if(result.ok){editingSession=null;void window.ConsultorioFinance?.reload();}
      toast(result.message);notify();return true;
    }
    if(!act.startsWith("real-agenda-"))return false;
