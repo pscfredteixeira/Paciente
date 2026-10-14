@@ -554,6 +554,26 @@ const finance={
      +'<section class="card hcard"><div class="card-head"><h2>Atendimentos</h2></div>'
      +'<p class="real-session-muted">Confirmar sessões, registrar faltas e corrigir lançamentos continua sendo feito na Agenda.</p>'
      +'<button class="btn" data-view="agenda">Abrir agenda '+I("arrow")+'</button></section></div>';
+   const pendingPatients=patients().map(patient=>({patient,balance:patientPosition(patient.id)}))
+      .filter(x=>x.balance.pending>0)
+      .sort((a,b)=>b.balance.pending-a.balance.pending||
+        a.patient.full_name.localeCompare(b.patient.full_name,"pt-BR"));
+   out+='<section class="card hcard real-home-pending"><div class="card-head"><h2>Pacientes com valores pendentes</h2>'
+     +'<span class="status '+(pendingPatients.length?"pending":"done")+'">'+pendingPatients.length+
+       ' paciente'+(pendingPatients.length===1?'':'s')+'</span></div>';
+   if(!pendingPatients.length)out+='<div class="empty">Nenhum saldo pendente registrado.</div>';
+   for(const {patient,balance} of pendingPatients.slice(0,5)){
+     out+='<div class="real-home-pending-row"><div><strong>'+esc(patient.full_name)+'</strong>'
+       +'<small>'+balance.chargedSessions+' '+(balance.chargedSessions===1?'sessão cobrada':'sessões cobradas')+
+        ' · '+(balance.lastCharged?'Última: '+esc(balance.lastCharged.split("-").reverse().join("/")):'Sem data')+'</small></div>'
+       +'<strong class="real-home-due">'+brl(balance.pending)+'</strong>'
+       +'<button class="btn sm" data-action="real-finance-open-patient" data-patient-id="'+esc(patient.id)+'">Ver ficha</button>'
+       +'</div>';
+   }
+   if(pendingPatients.length>5)
+     out+='<p class="real-session-muted">Mostrando 5 de '+pendingPatients.length+
+       ' pacientes com pendência. Consulte o Financeiro para os demais.</p>';
+   out+='<div class="real-home-pending-footer"><button class="btn" data-view="finance">Abrir todos os saldos</button></div></section>';
    return out;
  },
  renderPatientSummary(id,{esc,I}){
@@ -634,6 +654,14 @@ const finance={
      if(!window.confirm("Desfazer a conferência manual deste Pix? O recebimento e o saldo continuarão registrados; apenas a marcação de conferido será removida."))return true;
      const outcome=await finance.verifyPix(item.id,false,null);toast(outcome.message);
      if(outcome.ok)await finance.reload();return true;
+   }
+   if(act==="real-finance-open-patient"){
+     const id=button.dataset.patientId;
+     if(!getPatient(id)){toast("Paciente não encontrado. Atualize os cadastros.");return true;}
+     // Ir para Pacientes e selecionar a ficha e histórico sem perder o filtro financeiro salvo.
+     navigate("patients");
+     await window.ConsultorioPatientsUI?.select(id,render,{forceHistory:true});
+     return true;
    }
    if(act==="real-finance-new"){finance.begin();render();}
    else if(act==="real-finance-patient-open"){
