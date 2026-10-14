@@ -150,3 +150,21 @@
 .real-patient-history-audit ol{padding-left:20px;line-height:1.65;color:#555}
 @media(max-width:760px){.real-session-panel{padding:12px}.real-session-actions .btn{flex:1 1 42%;min-height:44px}.real-patient-history-head{align-items:flex-start}}
 @media(max-width:375px){.real-session-actions .btn{flex:1 1 100%}}
+
+/* Sprint 7.1 — dados pessoais administrativos, sem comprometer o layout mobile. */
+.patient-form-section-title{font-size:13px;font-weight:800;color:var(--dark);letter-spacing:-.1px;border-top:1px solid var(--border);padding-top:19px;margin-top:7px}
+.patient-form-section-title small{font-weight:500;font-size:12px;color:var(--ink-muted);margin-left:5px}
+.real-patient-personal{margin:17px 0 20px;padding-top:16px;border-top:1px solid var(--border)}
+.real-patient-personal .card-head{margin-bottom:10px}
+.real-patient-personal .card-head h3{font-size:15px;color:var(--dark);font-weight:800;margin:0}
+.real-patient-personal .profile-grid{margin:0}
+.real-patient-personal .profile-stat{min-width:0}
+.real-patient-personal .profile-stat strong{font-size:15px;letter-spacing:0;line-height:1.4;overflow-wrap:anywhere;word-break:break-word}
+.real-patient-personal .patient-email-stat{grid-column:1 / -1}
+.real-patient-personal .patient-email-stat strong{font-size:14px;font-weight:650}
+.patient-sensitive-value{font-variant-numeric:tabular-nums}
+@media(max-width:620px){
+ .real-patient-personal .profile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .real-patient-personal .patient-email-stat{grid-column:1 / -1}
+}
+@media(max-width:350px){.real-patient-personal .profile-grid{grid-template-columns:minmax(0,1fr)}}
