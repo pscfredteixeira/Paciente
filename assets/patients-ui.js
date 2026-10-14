@@ -57,6 +57,7 @@
       const selected = state.rows.filter(x => (filter === "all" || (filter === "active" ? x.is_active : !x.is_active))
         && x.full_name.toLocaleLowerCase("pt-BR").includes(String(query || "").toLocaleLowerCase("pt-BR")));
       const nActive = state.rows.filter(x => x.is_active).length;
+      const patientPosition = id => window.ConsultorioFinance?.patientPosition?.(id);
       const financeData = window.ConsultorioFinance?.state;
       const chargedSessionCount = new Map();
       if (financeData?.initialized) {
@@ -101,7 +102,11 @@
           + "<div class='profile-stat'><small>Frequência</small><strong>" + esc(row.cadence) + "</strong></div>"
           + "<div class='profile-stat'><small>Situação</small><strong>" + (row.is_active ? "Ativo" : "Arquivado") + "</strong></div>"
           + "<div class='profile-stat'><small>Sessões cobradas</small><strong>" +
-            (financeData?.initialized ? chargedSessionCount.get(row.id) || 0 : "Carregando...") + "</strong></div></div>"
+            (financeData?.initialized ? chargedSessionCount.get(row.id) || 0 : "Carregando...") + "</strong></div>"
+          + "<div class='profile-stat real-patient-balance-stat'><small>Saldo financeiro</small><strong>" +
+            (financeData?.initialized ? esc(patientPosition(row.id)?.label || "Não disponível") + ": " +
+              money((patientPosition(row.id)?.amount || 0) / 100) : "Atualizando...") +
+            "</strong></div></div>"
           + "<div class='real-patient-personal'><div class='card-head'><h3>Dados pessoais</h3><span class='muted'>Privado</span></div>"
           + "<div class='profile-grid'>"
           + "<div class='profile-stat'><small>Data de nascimento</small><strong>" + esc(formatBirthDate(row.birth_date) || "Não informado") + "</strong></div>"
@@ -161,7 +166,11 @@
             "<button class='chip " + (filter === k ? "active" : "") + "' data-action='real-patient-filter' data-filter-value='" + k + "'>" + v + "</button>").join("") + "</div></div>"
         + (n ? selected.map((p,i) => "<div class='table-row'><div class='initials i" + (i%4) + "'>" + esc(initials(p.full_name)) + "</div>"
             + "<div class='tflex'><div class='person-name'>" + esc(p.full_name) + "</div><div class='person-sub'>" + esc(p.cadence) + " · " + money(p.fee_cents / 100) + " por sessão" +
-              (financeData?.initialized ? " · " + (chargedSessionCount.get(p.id) || 0) + " sessão(ões) cobradas" : "") +
+              (financeData?.initialized ? " · " +
+                (chargedSessionCount.get(p.id) || 0) + " " +
+                ((chargedSessionCount.get(p.id) || 0) === 1 ? "sessão cobrada" : "sessões cobradas") +
+                " · " + (patientPosition(p.id)?.label || "Saldo") + ": " +
+                money((patientPosition(p.id)?.amount || 0) / 100) : "") +
               (p.is_active ? "" : " · Arquivado") + "</div></div>"
             + "<button class='btn sm' data-real-patient='" + esc(p.id) + "' aria-label='Abrir cadastro de " + esc(p.full_name) + "'>" + I("chev") + "</button></div>").join("")
             : "<div class='empty'>" + (state.rows.length ? "Nenhum resultado para este filtro." : "Nenhum paciente cadastrado. Selecione “Novo paciente”.") + "</div>")
