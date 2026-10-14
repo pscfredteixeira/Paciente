@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 9
+# Meu Consultório — Sprint 9.1
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -14,7 +14,7 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
-**Financeiro:** lançamentos reais de pagamentos, incluindo **Pix manual, dinheiro, transferência e cartão**; pagamentos antecipados viram créditos. A aba mostra recebimentos mensais, débitos pendentes, créditos antecipados e movimentações. **Conferência manual de Pix**: após verificar o crédito no banco por conta própria, marque-o como conferido, com identificador opcional e histórico de alterações. Estornos são auditados.
+**Financeiro:** lançamentos reais de pagamentos, incluindo **Pix manual, dinheiro, transferência e cartão**; pagamentos antecipados viram créditos. A aba mostra recebimentos mensais, débitos pendentes, créditos antecipados e movimentações. **Conferência manual de Pix**: seção compacta e expansível (inclusive no iPhone); após verificar o crédito no banco por conta própria, marque-o como conferido, com identificador opcional e histórico de alterações. Estornos são auditados.
 
 **Início:** indicadores reais de pacientes, sessões, débitos pendentes e recebimentos.
 
