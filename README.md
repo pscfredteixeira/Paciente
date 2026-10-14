@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 11
+# Meu Consultório — Sprint 12
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -8,7 +8,7 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Pacientes:** cadastro privado, busca, edição, valor de sessão, frequência, **data de nascimento, CPF e e-mail opcionais**, arquivamento e reativação. Registros no Supabase com RLS. CPF validado e único por proprietário.
 
-**Agenda:** compromissos reais do Google Calendar, vínculos semanais automáticos e confirmação de atendimento. Você pode registrar **sessão realizada**, **falta cobrada**, **falta sem cobrança** ou **cancelamento**. Confirmar uma sessão cobrada cria **um único débito real** com o honorário congelado daquela sessão. Alterações posteriores são auditadas. O Google Calendar continua somente leitura.
+**Agenda:** compromissos reais do Google Calendar e vínculos semanais automáticos. Após vincular, você deve **confirmar que a sessão aconteceu** para criar cobrança: o botão **Confirmar realizada e cobrar** gera um único débito com honorários congelados, depois de sua confirmação. Pode registrar faltas cobradas/isentas ou cancelamentos, corrigir registros e ir para o Financeiro. **Vincular sozinho não gera cobrança**; o Google Calendar continua somente leitura.
 
 **Pacientes — histórico real:** cadastro mostra atendimentos, débitos, correções, **saldo, crédito disponível e extrato**. Possibilidade de registrar pagamentos diretamente pelo perfil.
 
@@ -18,7 +18,7 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Início:** indicadores reais de pacientes, sessões, débitos pendentes e recebimentos.
 
-**Relatórios reais:** gráfico e tabela dos últimos 6/12 meses com recebimentos, débitos, sessões realizadas e faltas. Posição atual de pendências e créditos por paciente. Sem números fictícios quando autenticado.
+**Relatórios reais:** gráfico e tabela dos últimos 6/12 meses com recebimentos, débitos, sessões realizadas e faltas; posição atual de pendências/créditos. **Fechamento mensal (prévia)** por mês com exportação CSV privada para Excel. Sem números fictícios quando autenticado.
 
 ## Partes que ainda não estão implementadas
 
@@ -63,6 +63,7 @@ docs/
   SPRINT_09_RELATORIOS_PIX.md
   SPRINT_10_CSV_PIX.md
   SPRINT_11_OFX.md
+  SPRINT_12_FECHAMENTO_E_CORRECAO.md
 ```
 
 ## Segurança
@@ -73,8 +74,8 @@ Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled
 
 [Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md) · [Sessões e débitos reais](./docs/SPRINT_07_SESSOES.md).
 
-[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md) · [Leitura OFX local](./docs/SPRINT_11_OFX.md).
+[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md) · [Leitura OFX local](./docs/SPRINT_11_OFX.md) · [Fechamento mensal e correção de cobranças](./docs/SPRINT_12_FECHAMENTO_E_CORRECAO.md).
 
 ## Próxima etapa
 
-Validar o importador local com um CSV ou OFX pequeno do banco do usuário, sem compartilhar dados financeiros reais. Ajustar diferenças de formato com exemplos fictícios, se necessário; nenhuma conexão bancária foi criada.
+Validar no navegador o fluxo Agenda → vincular paciente → confirmar realizada → Financeiro, com débito único e atualizado. Depois conferir exportação mensal e, opcionalmente, o importador CSV/OFX com arquivos de exemplo.
