@@ -170,7 +170,7 @@ const agenda={
  },
  render({head,I,esc}){
    const provider=window.ConsultorioCalendar?.state||{connected:false,loaded:false,busy:false,error:""};
-   let page=head("agenda");
+   let page=head("agenda",'<button class="btn primary" data-action="real-manual-begin">Registrar sessão fora do calendário</button>');
    page+='<div class="notice"><span class="icon">'+I("shield")+'</span><div><strong>Agenda real · Google Calendar</strong><p>1. Vincule o paciente. 2. Depois do atendimento, toque em <strong>Confirmar realizada e cobrar</strong>. Só a confirmação cria o débito, que aparece no Financeiro.</p></div></div>';
    if(!provider.loaded){
      return page+'<section class="card hcard"><div class="empty">Verificando sua conexão com o Google Calendar...</div></section>';
