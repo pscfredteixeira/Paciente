@@ -288,3 +288,45 @@
  .real-pix-toggle{width:100%;justify-content:space-between;min-height:44px}
  .real-pix-expanded{padding-top:11px;margin-top:13px}
 }
+
+/* Sprint 10 — importação de CSV e comparação Pix exclusivamente no navegador. */
+.real-statement{margin-top:18px}
+.real-statement-heading{align-items:flex-start;flex-wrap:wrap}
+.real-statement-heading>div{flex:1 1 225px;min-width:0}
+.real-statement-heading h2{line-height:1.3}
+.real-statement-caption{font-size:12px;line-height:1.55;color:var(--ink-muted);margin:6px 0 0;max-width:620px}
+.real-statement-heading .btn{flex:0 0 auto;max-width:100%;min-height:42px}
+.real-statement-body{border-top:1px solid var(--border);padding-top:16px;margin-top:14px}
+.real-statement-privacy{background:#f5f1fa;border-radius:11px;padding:12px 14px;font-size:12px;color:var(--ink-muted);line-height:1.55;margin:0 0 16px}
+.real-statement-picker{display:block;margin-bottom:15px}
+.real-statement-picker input{display:block;width:100%;max-width:100%;font-size:13px;min-height:45px;line-height:1.5;margin-top:6px;white-space:normal;overflow:hidden}
+.real-statement-error{background:#fff0e5;color:#8a4f19;padding:13px;border-radius:9px;margin:12px 0;font-size:13px;line-height:1.45}
+.real-statement-fileinfo{display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap;font-size:12px;font-weight:700;color:var(--dark);padding:9px 0 14px;overflow-wrap:anywhere}
+.real-statement-fileinfo span{max-width:100%}
+.real-statement-mapping{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;padding:15px;background:#f9f7fc;border:1px solid var(--border);border-radius:12px}
+.real-statement-mapping .field{min-width:0}
+.real-statement-mapping .field select{width:100%;min-width:0;max-width:100%;height:44px;text-overflow:ellipsis}
+.real-statement-options{display:flex;flex-direction:column;gap:12px;margin:15px 0}
+.real-statement-options label{display:flex;align-items:flex-start;gap:10px;color:var(--ink-muted);font-size:12px;line-height:1.45}
+.real-statement-options input{flex:0 0 auto;margin-top:3px;width:16px;height:16px;accent-color:var(--purple)}
+.real-statement-results{margin:16px 0;padding-bottom:12px}
+.real-statement-results-head{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);padding:0 0 12px}
+.real-statement-results-head strong{font-size:14px}
+.real-statement-results-head span{font-size:12px;color:var(--ink-muted)}
+.real-statement-empty{padding:20px 9px;text-align:center;color:var(--ink-muted);font-size:12px;line-height:1.6}
+.real-statement-row{display:flex;flex-direction:column;gap:10px;padding:15px 0;border-bottom:1px solid var(--border);min-width:0}
+.real-statement-row-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.real-statement-row-title strong{font-size:16px;color:var(--dark);font-variant-numeric:tabular-nums}
+.real-statement-row-title span{font-size:12px;color:var(--ink-muted)}
+.real-statement-row-description{font-size:12px;line-height:1.5;color:var(--ink-muted);margin:0;overflow-wrap:anywhere}
+.real-statement-row .field{width:100%;max-width:100%;min-width:0}
+.real-statement-row .field select{width:100%;max-width:100%;height:44px;min-width:0;white-space:nowrap;text-overflow:ellipsis;font-size:13px}
+.real-statement-row .btn{align-self:flex-start;max-width:100%;white-space:normal;line-height:1.3;min-height:44px}
+@media(max-width:600px){
+ .real-statement{padding:16px}
+ .real-statement-mapping{grid-template-columns:1fr;gap:11px;padding:12px}
+ .real-statement-heading .btn{width:100%;flex:1 1 100%}
+ .real-statement-caption{font-size:12px}
+ .real-statement-row .btn{width:100%}
+ .real-statement-results-head{align-items:flex-start}
+}
