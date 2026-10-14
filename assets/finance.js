@@ -220,6 +220,31 @@ const finance={
    }
    return out+'</section><p class="foot-note">Os valores são calculados a partir dos registros reais. Créditos são considerados automaticamente no saldo, sem alterar as sessões. Não importamos extratos bancários.</p>';
  },
+ renderHome({head,I,esc}){
+   const sum=allSummary();
+   let out=head("home",'<button class="btn soft" data-view="finance">'+I("wallet")+' Abrir financeiro</button>');
+   out+='<div class="notice"><span class="icon">'+I("shield")+'</span><div><strong>Visão geral real</strong>'
+    +'<p>Pacientes, sessões confirmadas e pagamentos registrados no Supabase. Compromissos futuros ficam na Agenda.</p></div></div>';
+   if(loading&&!initialized)return out+'<section class="card hcard"><div class="empty">Carregando os indicadores reais...</div></section>';
+   if(error)return out+'<section class="card hcard"><p>'+esc(error)+'</p>'
+     +'<button class="btn" data-action="real-finance-refresh">Tentar novamente</button></section>';
+   const active=patients().filter(x=>x.is_active).length;
+   const completed=sessions.filter(x=>x.status==="done").length;
+   out+='<div class="real-finance-metrics">'
+     +[['Pacientes ativos',active,false],['Sessões realizadas',completed,false],
+       ['Saldo a receber',sum.pending,true],['Recebido neste mês',sum.receivedMonth,true]]
+       .map(([label,value,currency])=>'<div class="card real-finance-metric"><small>'+esc(label)
+       +'</small><strong>'+(currency?brl(value):value)+'</strong></div>').join('')+'</div>';
+   out+='<div class="grid grid-2 real-finance-home-grid"><section class="card hcard"><div class="card-head"><h2>Resumo financeiro</h2></div>'
+     +'<p class="real-session-muted">Total de recebimentos registrados: <strong>'+brl(sum.received)+'</strong></p>'
+     +'<p class="real-session-muted">Crédito antecipado disponível: <strong>'+brl(sum.credit)+'</strong></p>'
+     +'<p class="real-session-muted">Pacientes com pendências: <strong>'+sum.overduePatients+'</strong></p>'
+     +'<button class="btn primary" data-view="finance">Ver financeiro '+I("arrow")+'</button></section>'
+     +'<section class="card hcard"><div class="card-head"><h2>Atendimentos</h2></div>'
+     +'<p class="real-session-muted">Confirmar sessões, registrar faltas e corrigir lançamentos continua sendo feito na Agenda.</p>'
+     +'<button class="btn" data-view="agenda">Abrir agenda '+I("arrow")+'</button></section></div>';
+   return out;
+ },
  renderPatientSummary(id,{esc,I}){
    const p=getPatient(id);if(!p)return"";
    if(loading&&!initialized)return'<section class="card hcard"><div class="empty">Carregando saldo financeiro...</div></section>';
