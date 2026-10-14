@@ -312,7 +312,9 @@ const finance={
        out+='</div>';
      }
    }
-   return out+'</section><p class="foot-note">Os valores são calculados a partir dos registros reais. Créditos são considerados automaticamente no saldo, sem alterar as sessões. Conferência Pix é exclusivamente manual.</p>';
+   out+='</section>';
+   out+=window.ConsultorioStatement?.render({esc})||"";
+   return out+'<p class="foot-note">Os valores são calculados a partir dos registros reais. Créditos são considerados automaticamente no saldo, sem alterar as sessões. Conferência Pix é exclusivamente manual.</p>';
  },
  renderReports({head,I,esc}){
    let out=head("reports",'<button class="btn soft" data-action="real-finance-refresh">'+I("clock")+' Atualizar dados</button>');
