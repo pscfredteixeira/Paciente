@@ -61,7 +61,7 @@ const store={
  },
  async register(event,patientId,status,correct=false){
    const db=client();
-   if(!db||saving||weekLoading)return {ok:false,message:"Aguarde o carregamento ou faça login novamente."};
+   if(!db||saving||(weekLoading&&!String(event?.id||"").startsWith("manual:")))return {ok:false,message:"Aguarde o carregamento ou faça login novamente."};
    const start=event?.start?.dateTime||event?.start?.date;
    const scheduled=new Date(start||"");
    if(!event?.id||!patientId||!Number.isFinite(scheduled.getTime()))
