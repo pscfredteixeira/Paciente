@@ -7,6 +7,26 @@
   let editor = null;
   let filter = "active";
   const initials = value => String(value || "").trim().split(/\s+/).slice(0, 2).map(x => x.slice(0,1).toUpperCase()).join("");
+  // Draft stays only in JS memory while the form is open (never localStorage).
+  // Necessary because app.render() replaces #app.innerHTML on auth/session updates.
+  let draft = null;
+  const captureDraft = () => {
+    if (!editor || typeof document === "undefined") return;
+    const form = document.getElementById("real-patient-form");
+    if (!form) return;
+    const read = id => form.querySelector("#" + id)?.value ?? "";
+    draft = {
+      editor,
+      full_name: read("real-patient-name"),
+      fee: read("real-patient-fee"),
+      cadence: read("real-patient-cadence"),
+      birth_date: read("real-patient-birth-date"),
+      cpf: read("real-patient-cpf"),
+      email: read("real-patient-email")
+    };
+  };
+  const clearDraft = () => { draft = null; };
+
   const store = () => window.ConsultorioPatients;
   const formatCpf = raw => {
     const value = String(raw || "").replace(/\D/g, "");
@@ -25,7 +45,8 @@
     return result.year + "-" + result.month + "-" + result.day;
   };
   const ui = {
-    reset() { chosen = null; editor = null; filter = "active"; },
+    reset() { chosen = null; editor = null; filter = "active"; clearDraft(); },
+    captureDraft,
     render(helpers) {
       const { head, I, esc, money, query } = helpers;
       const state = store()?.state || { rows: [], loading: false, busy: false, initialized: false, error: "Indisponível" };
@@ -39,12 +60,13 @@
       if (state.loading && !state.initialized) return output + "<section class='card hcard'><div class='empty'>Carregando seus pacientes...</div></section>";
       if (state.error) return output + "<section class='card hcard'><div class='notice orange' role='alert'>" + I("info") + "<div>" + esc(state.error) + "</div></div><button class='btn' data-action='real-patient-reload'>Tentar novamente</button></section>";
       if (editor === "new" || editing) {
-        const name = editing?.full_name || "";
-        const fee = editing ? (editing.fee_cents / 100).toFixed(2).replace(".", ",") : "";
-        const cadence = editing?.cadence || "Semanal";
-        const birthDate = editing?.birth_date || "";
-        const cpf = formatCpf(editing?.cpf);
-        const email = editing?.email || "";
+        const activeDraft = draft?.editor === editor ? draft : null;
+        const name = activeDraft ? activeDraft.full_name : (editing?.full_name || "");
+        const fee = activeDraft ? activeDraft.fee : (editing ? (editing.fee_cents / 100).toFixed(2).replace(".", ",") : "");
+        const cadence = activeDraft ? activeDraft.cadence : (editing?.cadence || "Semanal");
+        const birthDate = activeDraft ? activeDraft.birth_date : (editing?.birth_date || "");
+        const cpf = activeDraft ? activeDraft.cpf : formatCpf(editing?.cpf);
+        const email = activeDraft ? activeDraft.email : (editing?.email || "");
         const options = ["Semanal","Quinzenal","Mensal","Avulsa"].map(x => "<option value='" + x + "'" + (x === cadence ? " selected" : "") + ">" + x + "</option>").join("");
         output += "<section class='card hcard real-patient-form'><div class='card-head'><h2>" + (editing ? "Editar paciente" : "Novo paciente") + "</h2><span class='status unlinked'>Privado</span></div>"
           + "<p class='subhead'>Informações administrativas do paciente. Data de nascimento, CPF e e-mail são opcionais e privados. Não inclua informações clínicas.</p>"
@@ -124,14 +146,14 @@
         + "</section><p class='foot-note'>Os registros ficam no banco protegido, não no GitHub. Cadastros arquivados continuam preservados.</p>";
       return output;
     },
-    select(id, render) { chosen = id; editor = null; render();void window.ConsultorioSessions?.loadPatientHistory(id); },
+    select(id, render) { chosen = id; editor = null; clearDraft(); render();void window.ConsultorioSessions?.loadPatientHistory(id); },
     async handleClick(button, render, notify) {
       const act = button.dataset.action || "";
       if (!act.startsWith("real-patient-")) return false;
-      if (act === "real-patient-new") { chosen = null; editor = "new"; render(); }
-      else if (act === "real-patient-cancel") { editor = null; render(); }
-      else if (act === "real-patient-back") { chosen = null; editor = null; render(); }
-      else if (act === "real-patient-edit") { chosen = button.dataset.id; editor = chosen; render(); }
+      if (act === "real-patient-new") { chosen = null; editor = "new"; clearDraft(); render(); }
+      else if (act === "real-patient-cancel") { editor = null; clearDraft(); render(); }
+      else if (act === "real-patient-back") { chosen = null; editor = null; clearDraft(); render(); }
+      else if (act === "real-patient-edit") { chosen = button.dataset.id; editor = chosen; clearDraft(); render(); }
       else if (act === "real-patient-filter") { filter = button.dataset.filterValue || "active"; render(); }
       else if (act === "real-patient-reload") { await store()?.load(true); }
       else if (act === "real-patient-history-reload") { if(chosen)await window.ConsultorioSessions?.loadPatientHistory(chosen); }
@@ -162,7 +184,7 @@
       const cents = Number(parts[0]) * 100 + Number((parts[1] || "").padEnd(2,"0"));
       const id = editor === "new" ? null : editor;
       const result = await store().save({ full_name: name, fee_cents: cents, cadence, birth_date, cpf, email }, id);
-      if (result.ok) { editor = null; chosen = result.id; render(); void window.ConsultorioSessions?.loadPatientHistory(result.id); notify(id ? "Cadastro atualizado." : "Paciente cadastrado."); }
+      if (result.ok) { editor = null; chosen = result.id; clearDraft(); render(); void window.ConsultorioSessions?.loadPatientHistory(result.id); notify(id ? "Cadastro atualizado." : "Paciente cadastrado."); }
       else notify(result.message);
       return true;
     }
