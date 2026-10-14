@@ -22,7 +22,8 @@ const store={
  clear(){weekRevision++;historyRevision++;records=new Map();weekLoading=false;weekError="";
    historyPatientId=null;history=[];audit=[];historyLoading=false;historyError="";saving=false;notify();},
  async loadForEvents(events){
-   const db=client();if(!db||weekLoading)return;
+   const db=client();if(!db)return;
+   // Permite nova consulta se a semana mudar durante a leitura anterior: a mais recente vence.
    const req=++weekRevision;weekLoading=true;weekError="";notify();
    try{
      const ids=[...new Set((events||[]).map(e=>e?.id).filter(x=>typeof x==="string"&&x.length))];
