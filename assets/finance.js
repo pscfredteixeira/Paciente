@@ -577,25 +577,20 @@ const finance={
    return out;
  },
  renderPatientSummary(id,{esc,I}){
-   const p=getPatient(id);if(!p)return"";
+   const patient=getPatient(id);if(!patient)return"";
    if(loading&&!initialized)return'<section class="card hcard"><div class="empty">Carregando saldo financeiro...</div></section>';
-   if(error)return'<section class="card hcard"><p>Financeiro indisponível. Abra a aba Financeiro para tentar novamente.</p></section>';
-   const b=summary(id),entries=ledgerFor(id).slice().reverse().slice(0,30);
-   let out='<section class="card hcard real-patient-finance"><div class="card-head"><h2>Financeiro real do paciente</h2>'
+   if(error)return'<section class="card hcard"><p role="alert">Financeiro indisponível. Abra a aba Financeiro para atualizar os dados.</p></section>';
+   const b=patientPosition(id);
+   let out='<section class="card hcard real-patient-finance"><div class="card-head"><h2>Posição financeira do paciente</h2>'
      +'<button class="btn primary sm" data-action="real-finance-patient-open" data-patient-id="'+esc(id)+'">Registrar pagamento</button></div>'
-     +'<div class="real-finance-metrics real-finance-metrics-sm">'
-     +[['Débitos',b.charges],['Recebidos',b.received],[b.credit?'Crédito disponível':'Saldo pendente',b.credit||b.pending]].map(([label,amount])=>
-       '<div class="real-finance-metric"><small>'+esc(label)+'</small><strong>'+brl(amount)+'</strong></div>').join('')+'</div>'
-     +'<p class="real-session-muted">Créditos pagos antecipadamente são descontados automaticamente dos débitos. Os pagamentos são lançados separadamente das sessões.</p>'
-     +'<h3 class="real-finance-extract-title">Extrato por data</h3>';
-   if(!entries.length)out+='<div class="empty">Ainda não há sessões cobradas ou pagamentos registrados.</div>';
-   for(const e of entries){
-      out+='<div class="real-finance-movement"><div><strong>'+esc(e.label)+'</strong>'
-        +'<small>'+esc(e.day.split("-").reverse().join("/"))+(e.voided?' · Estornado':'')
-        +' · Saldo após: '+brl(e.running_cents)+'</small></div>'
-        +'<strong class="'+(e.type==="payment"?"is-incoming":"is-debit")+(e.voided?" is-voided":"")+'">'+(e.type==="payment"?"−":"+")+brl(e.amount_cents)+'</strong></div>';
-   }
-   return out+'</section>';
+     +'<div class="real-finance-metrics real-patient-metrics-4">'
+     +[['Sessões cobradas',String(b.chargedSessions)],
+       ['Total cobrado',brl(b.charges)],['Total recebido',brl(b.received)],
+       [b.label,brl(b.amount)]].map(([label,value])=>
+       '<div class="real-finance-metric"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join('')+'</div>'
+     +'<p class="real-session-muted">Os pagamentos são lançados separadamente das sessões. Créditos antecipados reduzem automaticamente o saldo total do paciente, sem indicar uma sessão específica como quitada.</p>'
+     +'</section>';
+   return out+(window.ConsultorioPatientExtract?.render(id,{esc})||"");
  },
  async click(button,render,toast,navigate){
    const act=button.dataset.action||"";
