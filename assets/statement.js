@@ -10,11 +10,13 @@ const getFinance=()=>window.ConsultorioFinance;
 const brl=n=>(n/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 let open=false,filename="",matrix=[],headerRow=0,mapping={date:-1,amount:-1,description:-1,type:-1,reference:-1};
 let delimiter="",error="",loading=false,includeGeneric=false,saveReference=false,chosen=new Map(),completed=new Set(),revision=0;
+let format="",importInfo=null;
 const MAX_BYTES=2*1024*1024,MAX_ROWS=6000,MAX_VISIBLE=100;
 const clear=()=>{
  revision++;open=false;filename="";matrix=[];headerRow=0;
  mapping={date:-1,amount:-1,description:-1,type:-1,reference:-1};
- delimiter="";error="";loading=false;includeGeneric=false;saveReference=false;chosen=new Map();completed=new Set();notify();
+ delimiter="";error="";loading=false;includeGeneric=false;saveReference=false;chosen=new Map();completed=new Set();
+ format="";importInfo=null;notify();
 };
 const folded=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 const rowDate=value=>{
@@ -144,39 +146,45 @@ const suggestedMatches=()=>{
 };
 const stmt={
  get state(){return{open,filename,loading,error,hasFile:!!matrix.length,
-   rowsCount:matrix.length,headerRow,mapping:{...mapping},selected:chosen.size,completed:completed.size};},
+   rowsCount:matrix.length,headerRow,mapping:{...mapping},selected:chosen.size,completed:completed.size,format,importInfo};},
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
  clear,
  toggle(){if(!authorized())return;open=!open;notify();},
  async loadFile(file){
    if(!authorized())return;
    const req=++revision;
-   filename="";matrix=[];chosen.clear();completed.clear();error="";loading=true;notify();
+   filename="";matrix=[];chosen.clear();completed.clear();error="";format="";importInfo=null;loading=true;notify();
    try{
-     if(!file||!/\.(csv|txt)$/i.test(file.name||""))
-       throw Error("Selecione um arquivo .csv ou .txt exportado pelo seu banco.");
+     if(!file||!/\.(csv|txt|ofx)$/i.test(file.name||""))
+       throw Error("Selecione um arquivo .csv, .txt ou .ofx exportado pelo seu banco.");
      if(file.size<=0||file.size>MAX_BYTES)
-       throw Error("Use um CSV de até 2 MB. Exporte um período menor, se necessário.");
+       throw Error("Use um arquivo bancário de até 2 MB. Exporte um período menor, se necessário.");
      const buffer=await file.arrayBuffer();
      if(req!==revision||!authorized())return;
      let text;
      try{text=new TextDecoder("utf-8",{fatal:true}).decode(buffer);}
      catch(_){text=new TextDecoder("windows-1252").decode(buffer);}
-     if(text.includes("\u0000"))throw Error("Arquivo inválido. Exporte um CSV em vez de planilha XLSX.");
-     const sep=delimiterFor(text),parsed=parseCSV(text.replace(/^\uFEFF/,""),sep);
+     if(text.includes("\u0000"))throw Error("Arquivo inválido. Exporte um CSV ou OFX em vez de planilha XLSX.");
+     const isOfx=/\.ofx$/i.test(file.name)||/<OFX(?:\s|>)/i.test(text);
+     const result=isOfx?window.ConsultorioOfx?.parse(text):null;
+     if(isOfx&&!result)throw Error("Leitor de OFX indisponível. Atualize a página.");
+     const sep=isOfx?"":delimiterFor(text);
+     const parsed=isOfx?result.matrix:parseCSV(text.replace(/^\uFEFF/,""),sep);
      if(req!==revision||!authorized())return;
      matrix=parsed;headerRow=0;delimiter=sep;filename=String(file.name).slice(0,110);
+     format=isOfx?"OFX":"CSV";importInfo=isOfx?result:null;
      suggestMapping();
    }catch(e){if(req===revision){error=e?.message||"Não foi possível ler o CSV.";matrix=[];filename="";}}
    finally{if(req===revision){loading=false;notify();}}
  },
  mapColumn(kind,value){
-   if(!Object.prototype.hasOwnProperty.call(mapping,kind))return;
+   if(format==="OFX"||!Object.prototype.hasOwnProperty.call(mapping,kind))return;
    const n=Number(value);
    if(!Number.isSafeInteger(n)||n<-1||n>=columnNames().length)return;
    mapping[kind]=n;chosen.clear();completed.clear();notify();
  },
  setHeader(value){
+   if(format==="OFX")return;
    const n=Number(value);
    if(!Number.isSafeInteger(n)||n<0||n>=Math.min(12,matrix.length-1))return;
    headerRow=n;suggestMapping();chosen.clear();completed.clear();notify();
