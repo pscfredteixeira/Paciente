@@ -3,7 +3,7 @@
 (()=>{
 "use strict";
 const listeners=new Set();
-let sessions=[],payments=[],audit=[],loading=false,initialized=false,error="",saving=false,revision=0;
+let sessions=[],payments=[],audit=[],loading=false,initialized=false,error="",saving=false,revision=0,refreshQueued=false;
 let filter="all",editing=false,formDraft=null,pendingRequestId=null,editingPixId=null,pixRefDraft="",pixExpanded=false,reportMonths=6,closingMonth=null;
 const signal=()=>{for(const fn of listeners){try{fn()}catch(_){}}};
 const auth=()=>window.ConsultorioAuth?.state.phase==="authorized"?window.ConsultorioAuth?.dataClient:null;
@@ -169,10 +169,12 @@ const finance={
  get state(){return{sessions:sessions.slice(),payments:payments.slice(),audit:audit.slice(),
   loading,initialized,error,saving,filter,editing,editingPixId,reportMonths,closingMonth,summary:allSummary()};},
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
- clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;filter="all";editingPixId=null;pixRefDraft="";pixExpanded=false;reportMonths=6;closingMonth=null;resetForm();signal();},
+ clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;refreshQueued=false;filter="all";editingPixId=null;pixRefDraft="";pixExpanded=false;reportMonths=6;closingMonth=null;resetForm();signal();},
  ensure(){if(auth()&&!initialized&&!loading&&!error)void finance.load();},
  async load(force=false){
-   const db=auth();if(!db||loading||saving||(initialized&&!force))return;
+   const db=auth();if(!db)return;
+   if(loading||saving){if(force)refreshQueued=true;return;}
+   if(initialized&&!force)return;
    const seq=++revision;loading=true;error="";signal();
    try{
      const [nextSessions,nextPayments,nextAudit]=await Promise.all([
@@ -183,9 +185,22 @@ const finance={
      if(seq!==revision||!auth())return;
      sessions=nextSessions;payments=nextPayments;audit=nextAudit;initialized=true;
    }catch(_){if(seq===revision){error=fallback;initialized=false;}}
-   finally{if(seq===revision){loading=false;signal();}}
+   finally{
+     if(seq===revision){
+       loading=false;signal();
+       if(refreshQueued&&auth()){
+         refreshQueued=false;
+         void finance.load(true);
+       }
+     }
+   }
  },
- async reload(){error="";initialized=false;await finance.load(true);},
+ async reload(){
+   if(!auth())return;
+   if(loading||saving){refreshQueued=true;return;}
+   error="";initialized=false;
+   await finance.load(true);
+ },
  begin(patientId=null){
    editing=true;
    formDraft={patient_id:patientId||"",amount:"",paid_on:realToday(),method:"Pix",note:""};
