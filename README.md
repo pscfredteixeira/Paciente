@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 12
+# Meu Consultório — Sprint 12.1
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -10,7 +10,9 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Agenda:** compromissos reais do Google Calendar e vínculos semanais automáticos. Após vincular, você deve **confirmar que a sessão aconteceu** para criar cobrança: o botão **Confirmar realizada e cobrar** gera um único débito com honorários congelados, depois de sua confirmação. Pode registrar faltas cobradas/isentas ou cancelamentos, corrigir registros e ir para o Financeiro. **Vincular sozinho não gera cobrança**; o Google Calendar continua somente leitura.
 
-**Pacientes — histórico real:** cadastro mostra atendimentos, débitos, correções, **saldo, crédito disponível e extrato**. Possibilidade de registrar pagamentos diretamente pelo perfil.
+**Pacientes — histórico real:** cadastro mostra atendimentos, débitos, correções, **saldo, crédito disponível e extrato**. Agora permite **registrar sessão manual**, mesmo sem Google Calendar, e corrigir seus lançamentos pelo histórico. Possibilidade de registrar pagamentos diretamente pelo perfil.
+
+**Sessões manuais:** via Pacientes ou botão na Agenda, escolha o paciente, data, hora e situação. Sessão realizada/falta cobrada gera débito real na mesma RPC transacional da Agenda. Não cria evento Google; débito só após confirmação e honorário é congelado. Permite corrigir situação e desfazer registro.
 
 **Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
@@ -39,6 +41,7 @@ assets/
   ofx.js
   calendar.js
   sessions.js
+  manual-sessions.js
   agenda-real.js
   styles.css
 supabase/migrations/
@@ -64,6 +67,7 @@ docs/
   SPRINT_10_CSV_PIX.md
   SPRINT_11_OFX.md
   SPRINT_12_FECHAMENTO_E_CORRECAO.md
+  SPRINT_12_1_SESSOES_MANUAIS.md
 ```
 
 ## Segurança
@@ -74,8 +78,8 @@ Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled
 
 [Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md) · [Sessões e débitos reais](./docs/SPRINT_07_SESSOES.md).
 
-[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md) · [Leitura OFX local](./docs/SPRINT_11_OFX.md) · [Fechamento mensal e correção de cobranças](./docs/SPRINT_12_FECHAMENTO_E_CORRECAO.md).
+[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md) · [Leitura OFX local](./docs/SPRINT_11_OFX.md) · [Fechamento mensal e correção de cobranças](./docs/SPRINT_12_FECHAMENTO_E_CORRECAO.md) · [Sessões fora do Google Calendar](./docs/SPRINT_12_1_SESSOES_MANUAIS.md).
 
 ## Próxima etapa
 
-Validar no navegador o fluxo Agenda → vincular paciente → confirmar realizada → Financeiro, com débito único e atualizado. Depois conferir exportação mensal e, opcionalmente, o importador CSV/OFX com arquivos de exemplo.
+Validar sessão manual em Pacientes, cobrando uma única vez e refletindo o valor no Financeiro. Validar correção de situação/desfazer no histórico. Conferir também o fluxo da Agenda e a exportação mensal.
