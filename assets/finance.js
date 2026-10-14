@@ -4,7 +4,7 @@
 "use strict";
 const listeners=new Set();
 let sessions=[],payments=[],audit=[],loading=false,initialized=false,error="",saving=false,revision=0;
-let filter="all",editing=false,formDraft=null,pendingRequestId=null;
+let filter="all",editing=false,formDraft=null,pendingRequestId=null,editingPixId=null,pixRefDraft="",reportMonths=6;
 const signal=()=>{for(const fn of listeners){try{fn()}catch(_){}}};
 const auth=()=>window.ConsultorioAuth?.state.phase==="authorized"?window.ConsultorioAuth?.dataClient:null;
 const patients=()=>window.ConsultorioPatients?.state.rows||[];
@@ -92,11 +92,20 @@ const captureDraft=()=>{
    method:read(fields[3]),note:read(fields[4])};
 };
 const resetForm=()=>{editing=false;formDraft=null;pendingRequestId=null;};
+const capturePixDraft=()=>{
+ if(!editingPixId||typeof document==="undefined")return;
+ const input=document.getElementById("real-pix-reference");
+ if(input?.dataset.paymentId===editingPixId)pixRefDraft=input.value;
+};
+const pixStatus=payment=>{
+ if(payment.voided_at)return "Estornado";
+ return payment.pix_verified_at?"Conferido manualmente":"Pendente de conferência";
+};
 const finance={
  get state(){return{sessions:sessions.slice(),payments:payments.slice(),audit:audit.slice(),
-  loading,initialized,error,saving,filter,editing,summary:allSummary()};},
+  loading,initialized,error,saving,filter,editing,editingPixId,reportMonths,summary:allSummary()};},
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
- clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;filter="all";resetForm();signal();},
+ clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;filter="all";editingPixId=null;pixRefDraft="";reportMonths=6;resetForm();signal();},
  ensure(){if(auth()&&!initialized&&!loading&&!error)void finance.load();},
  async load(force=false){
    const db=auth();if(!db||loading||saving||(initialized&&!force))return;
@@ -104,7 +113,7 @@ const finance={
    try{
      const [nextSessions,nextPayments,nextAudit]=await Promise.all([
        pagination(db,"session_records","id,patient_id,scheduled_at,status,charge_cents","scheduled_at"),
-       pagination(db,"patient_payments","id,patient_id,request_id,amount_cents,paid_on,method,note,voided_at,created_at","paid_on"),
+       pagination(db,"patient_payments","id,patient_id,request_id,amount_cents,paid_on,method,note,voided_at,created_at,pix_verified_at,pix_reference","paid_on"),
        pagination(db,"payment_audit","id,payment_id,action,amount_cents,occurred_at","occurred_at")
      ]);
      if(seq!==revision||!auth())return;
@@ -170,7 +179,7 @@ const finance={
  },
  summary,ledgerFor,
  render({head,I,esc}){
-   captureDraft();
+   captureDraft();capturePixDraft();
    let out=head("finance",'<button class="btn primary" data-action="real-finance-new">'+I("plus")+' Registrar pagamento</button>');
    out+='<div class="notice"><span class="icon">'+I("shield")+'</span><div><strong>Financeiro real · Supabase</strong><p>Os débitos vêm das sessões confirmadas e os recebimentos são lançados manualmente. Pagamentos antecipados viram crédito disponível; não há integração bancária automática.</p></div></div>';
    if(loading&&!initialized)return out+'<section class="card hcard"><div class="empty">Carregando seus lançamentos protegidos...</div></section>';
