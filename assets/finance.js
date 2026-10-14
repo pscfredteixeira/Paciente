@@ -285,6 +285,7 @@ const finance={
        +'. A conferência é manual e não consulta sua conta bancária.</p>'
        +'<button class="btn sm real-pix-toggle" data-action="real-pix-toggle" aria-controls="real-pix-list" aria-expanded="'+(pixExpanded?'true':'false')+'">'
        +(pixExpanded?'Ocultar lançamentos':'Ver lançamentos')+' <span aria-hidden="true">'+(pixExpanded?'▴':'▾')+'</span></button>';
+     if(!pixExpanded)out+='<div id="real-pix-list" hidden></div>';
      if(pixExpanded){
        out+='<div id="real-pix-list" class="real-pix-expanded">'
          +'<p class="real-pix-guidance">Antes de conferir, verifique a entrada, o valor e a data no extrato do banco. Isso não altera o saldo do paciente.</p>';
