@@ -349,3 +349,33 @@
  .real-statement-ofx-info strong{font-size:12px}
  .real-statement-fileinfo{flex-direction:column;gap:4px}
 }
+
+/* Sprint 12 — fechamento mensal e divergências de extrato. */
+.real-month-close{margin:20px 0;min-width:0}
+.real-month-close .card-head{margin-bottom:12px}
+.real-month-close .card-head h2{margin-bottom:5px}
+.real-month-close-hint{color:var(--ink-muted);font-size:12px;line-height:1.6;margin:0}
+.real-month-close-toolbar{display:flex;align-items:end;flex-wrap:wrap;gap:12px;padding:12px 0 8px}
+.real-month-close-toolbar .field{min-width:190px;flex:1 1 180px}
+.real-month-close-toolbar select{width:100%;min-width:0;height:45px}
+.real-month-close-toolbar .btn{min-height:44px;flex:0 1 auto;white-space:normal;line-height:1.25}
+.real-month-close-detail{font-size:12px;line-height:1.6;color:var(--ink-muted);margin:8px 0}
+.real-month-close-alert{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff5e9;color:#704518;border:1px solid #efd7b9;border-radius:10px;padding:11px 13px;font-size:12px;line-height:1.6;margin-top:12px}
+.real-month-close-alert .btn{min-height:38px;margin-left:auto}
+.real-month-close-privacy{font-size:12px;line-height:1.6;color:#5d536d;background:#f8f5fc;padding:11px 13px;border-radius:10px;margin-top:14px}
+.real-statement-alert{padding:11px 13px;background:#fff5e9;color:#704518;border-radius:10px;font-size:12px;line-height:1.6;margin:12px 0}
+.real-statement-unmatched{border:1px solid #e7dced;border-radius:11px;padding:13px;margin-top:18px}
+.real-statement-unmatched summary{font-size:13px;color:var(--dark);font-weight:800;cursor:pointer;line-height:1.5}
+.real-statement-unmatched .real-session-muted{margin:12px 0}
+.real-statement-unmatched-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--border);padding:11px 0;font-size:12px}
+.real-statement-unmatched-row strong{font-size:14px;color:var(--dark);font-variant-numeric:tabular-nums}
+.real-statement-unmatched-row span{color:var(--ink-muted)}
+.real-statement-unmatched-row small{display:block;width:100%;overflow-wrap:anywhere;color:var(--ink-muted);line-height:1.5}
+@media(max-width:560px){
+ .real-month-close-toolbar{flex-direction:column;align-items:stretch}
+ .real-month-close-toolbar .field{width:100%;flex-basis:auto}
+ .real-month-close-toolbar .btn{width:100%}
+ .real-month-close .real-finance-metrics-sm{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .real-month-close-alert .btn{width:100%;margin-left:0}
+}
+@media(max-width:350px){.real-month-close .real-finance-metrics-sm{grid-template-columns:1fr}}
