@@ -50,7 +50,8 @@ const parse=(raw)=>{
  if(sections.length>MAX_TRANSACTIONS)
    throw Error("O OFX tem mais de 6 mil transações. Exporte um período menor.");
  const matrix=[["Data","Valor","Descrição","Tipo","Identificador"]];
- let outgoing=0,invalid=0,valid=0;
+ let outgoing=0,invalid=0,valid=0,duplicates=0;
+ const seenIds=new Map();
  for(const section of sections){
    const date=validDate(getField(section,"DTPOSTED"));
    const amount=normalizedAmount(getField(section,"TRNAMT"));
@@ -65,12 +66,22 @@ const parse=(raw)=>{
    const description=[title,memo].filter(Boolean).filter((v,i,a)=>i===0||v!==a[0])
      .join(" · ").slice(0,400);
    const reference=getField(section,"FITID").slice(0,130);
+   if(reference){
+     const signature=date+"/"+amount.cents;
+     if(seenIds.has(reference)){
+       if(seenIds.get(reference)!==signature){
+         throw Error("O OFX contém movimentos diferentes com o mesmo identificador. Exporte um período menor e confira no banco.");
+       }
+       duplicates++;continue;
+     }
+     seenIds.set(reference,signature);
+   }
    // CREDIT describes direction, not proof that this was Pix.
    matrix.push([date,amount.decimal,description,"Crédito",reference]);
    valid++;
  }
  if(!valid)throw Error("Este OFX não contém entradas positivas válidas para comparar. Saídas e débitos são ignorados.");
- return {matrix,format:"OFX",total:sections.length,eligible:valid,outgoing,invalid,
+ return {matrix,format:"OFX",total:sections.length,eligible:valid,outgoing,invalid,duplicates,
    warning:!currency?"Confirme que o extrato é de uma conta em reais (BRL).":""};
 };
 window.ConsultorioOfx={parse};
