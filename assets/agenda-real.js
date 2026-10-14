@@ -109,7 +109,7 @@ const agenda={
      const {data,error:dbError}=await query.select("google_event_id").maybeSingle();
      if(dbError||!data?.google_event_id)throw new Error("Não foi possível salvar o vínculo.");
      links.set(eventId,patientId);
-     return {ok:true,message:"Vínculo salvo no Supabase. O Google Calendar não foi alterado."};
+     return {ok:true,message:"Paciente vinculado! Para gerar o débito, marque a sessão como realizada em Atendimento e cobrança. O Google Calendar não foi alterado."};
    }catch(_){return {ok:false,message:"Não foi possível salvar o vínculo. Tente novamente."};}
    finally{saving=false;notify();}
  },
@@ -132,8 +132,8 @@ const agenda={
      rules.set(key,patientId);
      const conflict=links.has(eventId)&&links.get(eventId)!==patientId;
      const message=selector.kind==="series"?
-       "Série vinculada! As ocorrências anteriores e futuras desta série serão reconhecidas. Nenhuma cobrança foi criada.":
-       "Regra salva! Eventos anteriores e futuros com o título exatamente igual serão reconhecidos. Nenhuma cobrança foi criada.";
+       "Série vinculada! As semanas anteriores e futuras serão reconhecidas. Para gerar débitos, confirme cada sessão realizada na Agenda.":
+       "Regra salva! Eventos anteriores e futuros com o mesmo título serão reconhecidos. Para gerar débitos, confirme cada sessão realizada na Agenda.";
      return {ok:true,message:message+(conflict?" Esta sessão tem uma associação individual diferente que continua valendo.":"")};
    }catch(_){return {ok:false,message:"Não foi possível salvar a vinculação automática. Tente novamente."};}
    finally{saving=false;notify();}
@@ -171,7 +171,7 @@ const agenda={
  render({head,I,esc}){
    const provider=window.ConsultorioCalendar?.state||{connected:false,loaded:false,busy:false,error:""};
    let page=head("agenda");
-   page+='<div class="notice"><span class="icon">'+I("shield")+'</span><div><strong>Agenda real · Google Calendar</strong><p>Os horários são consultados diretamente do Google, em modo somente leitura. Vincular um paciente não confirma a sessão nem gera cobrança.</p></div></div>';
+   page+='<div class="notice"><span class="icon">'+I("shield")+'</span><div><strong>Agenda real · Google Calendar</strong><p>1. Vincule o paciente. 2. Depois do atendimento, toque em <strong>Confirmar realizada e cobrar</strong>. Só a confirmação cria o débito, que aparece no Financeiro.</p></div></div>';
    if(!provider.loaded){
      return page+'<section class="card hcard"><div class="empty">Verificando sua conexão com o Google Calendar...</div></section>';
    }
@@ -255,10 +255,15 @@ const agenda={
             +' · '+(savedSession.charge_cents>0?'Débito: '+currency(savedSession.charge_cents):'Sem débito')
             +' · Honorário da sessão: '+currency(savedSession.fee_snapshot_cents)+'</p>':
             '<p class="real-session-muted">'+(canConfirm?
-              'Honorário previsto: '+currency(patient.fee_cents)+'. A cobrança só é criada depois da sua confirmação.':
+              'Honorário previsto: '+currency(patient.fee_cents)+'. Esta sessão ainda não gerou cobrança.':
               'Vincule o evento a um paciente antes de registrar o atendimento.')+'</p>')
+          +(!savedSession&&canConfirm?
+            '<button class="btn primary sm real-session-confirm" data-action="real-session-set" data-event-id="'+esc(e.id)+'" data-session-status="done" '+
+            (sessions.saving||future?'disabled':'')+'>Confirmar realizada e cobrar '+currency(patient.fee_cents)+'</button>':'')
           +(savedSession||canConfirm?'<button class="btn sm" data-action="real-session-toggle" data-event-id="'+esc(e.id)+'" '+(sessions.saving?'disabled':'')+'>'+
-            (editingSession===e.id?'Fechar opções':savedSession?'Corrigir registro':'Registrar atendimento')+'</button>':'')
+            (editingSession===e.id?'Fechar opções':savedSession?'Corrigir registro':'Registrar falta / cancelar')+'</button>':'')
+          +(savedSession&&savedSession.charge_cents>0?
+            '<button class="btn sm" data-view="finance">Ver cobrança no Financeiro</button>':'')
           +(editingSession===e.id&&(savedSession||canConfirm)?
             '<div class="real-session-actions"><p class="real-session-muted">Selecione o que aconteceu. Um registro para cada compromisso, com histórico de correções.</p>'
             +[['done','Realizada'],['missed_charge','Falta cobrada'],['missed_nocharge','Falta sem cobrança'],['cancelled','Cancelada']].map(([key,label])=>
@@ -271,7 +276,7 @@ const agenda={
    if(!available.length){
       page+='<p class="real-agenda-helper">'+(patients.loading?'Carregando lista de pacientes privados...':'Para associar eventos, primeiro cadastre pelo menos um paciente ativo na aba Pacientes.')+'</p>';
    }
-   page+='</section><div class="note-panel">'+I("info")+'<span>Agenda em leitura; dados financeiros desta aplicação ainda são demonstrativos. Nenhuma confirmação de sessão ou débito real é realizada aqui.</span></div>';
+   page+='</section><div class="note-panel">'+I("info")+'<span>Os débitos das sessões confirmadas são reais e ficam no Supabase. Apenas vincular um paciente não lança cobrança; o Google Calendar não é alterado.</span></div>';
    return page;
  },
  async click(target,render,toast){
