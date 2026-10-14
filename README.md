@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 7.1
+# Meu Consultório — Sprint 8
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -10,13 +10,17 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Agenda:** compromissos reais do Google Calendar, vínculos semanais automáticos e confirmação de atendimento. Você pode registrar **sessão realizada**, **falta cobrada**, **falta sem cobrança** ou **cancelamento**. Confirmar uma sessão cobrada cria **um único débito real** com o honorário congelado daquela sessão. Alterações posteriores são auditadas. O Google Calendar continua somente leitura.
 
-**Pacientes — histórico real:** abrir o cadastro permite ver os últimos atendimentos, débitos e correções (sem pagamentos ainda).
+**Pacientes — histórico real:** cadastro mostra atendimentos, débitos, correções, **saldo, crédito disponível e extrato**. Possibilidade de registrar pagamentos diretamente pelo perfil.
 
 **Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
+**Financeiro:** lançamentos reais de pagamentos, incluindo **Pix manual, dinheiro, transferência e cartão**; pagamentos antecipados viram créditos. A aba mostra recebimentos mensais, débitos pendentes, créditos antecipados e movimentações. Estornos são auditados.
+
+**Início:** indicadores reais de pacientes, sessões, débitos pendentes e recebimentos.
+
 ## Partes que ainda são demonstração
 
-**Início, Financeiro e Relatórios:** continuam exibindo dados fictícios no protótipo. Os **débitos reais** já são criados e exibidos na Agenda e no histórico do paciente; **pagamentos, saldos após recebimentos e Pix** ainda não estão implementados. Não interprete a tela Financeiro demonstrativa como valores reais.
+**Relatórios:** continuam mostrando dados ilustrativos. Pix automático, leitura de extrato bancário e conciliação com instituições financeiras ainda não foram implementados.
 
 ## Código modular
 
@@ -28,6 +32,7 @@ assets/
   config.js
   patients.js
   patients-ui.js
+  finance.js
   calendar.js
   sessions.js
   agenda-real.js
@@ -40,6 +45,7 @@ supabase/migrations/
   20261011232500_sprint_06_3_calendar_series_rules.sql
   20261012001500_sprint_07_sessions_debits_and_audit.sql
   20261014_sprint_07_1_patient_birth_cpf_email.sql
+  20261014_sprint_08_payments_private_ledger.sql
 docs/
   ARQUITETURA.md
   SPRINT_04_ACESSO.md
@@ -48,6 +54,7 @@ docs/
   SPRINT_06_3_SERIES.md
   SPRINT_07_SESSOES.md
   SPRINT_07_1_DADOS_PESSOAIS.md
+  SPRINT_08_FINANCEIRO.md
 ```
 
 ## Segurança
@@ -58,8 +65,8 @@ Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled
 
 [Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md) · [Sessões e débitos reais](./docs/SPRINT_07_SESSOES.md).
 
-[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md).
+[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md).
 
 ## Próxima etapa
 
-Validar a confirmação de sessões no navegador e então implementar o Sprint 8: pagamentos reais, saldos devedores, histórico de recebimentos e conciliação Pix.
+Validar o primeiro pagamento real em navegador. Sprint 9: relatórios reais e possível conciliação Pix, após definir integração bancária.
