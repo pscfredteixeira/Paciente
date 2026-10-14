@@ -207,7 +207,7 @@ const finance={
  summary,ledgerFor,
  render({head,I,esc}){
    captureDraft();capturePixDraft();
-   let out=head("finance",'<button class="btn primary" data-action="real-finance-new">'+I("plus")+' Registrar pagamento</button>');
+   let out=head("finance",'<button class="btn primary" data-action="real-finance-new">'+I("plus")+' Registrar pagamento</button> <button class="btn soft" data-action="real-pix-jump">Conferir Pix</button>');
    out+='<div class="notice"><span class="icon">'+I("shield")+'</span><div><strong>Financeiro real · Supabase</strong><p>Os débitos vêm das sessões confirmadas e os recebimentos são lançados manualmente. Pagamentos antecipados viram crédito disponível; não há integração bancária automática.</p></div></div>';
    if(loading&&!initialized)return out+'<section class="card hcard"><div class="empty">Carregando seus lançamentos protegidos...</div></section>';
    if(error)return out+'<section class="card hcard"><p role="alert">'+esc(error)+'</p><button class="btn" data-action="real-finance-refresh">Tentar novamente</button></section>';
@@ -268,7 +268,7 @@ const finance={
    const allPix=payments.filter(p=>p.method==="Pix"&&!p.voided_at)
      .sort((a,b)=>b.paid_on.localeCompare(a.paid_on)||b.created_at.localeCompare(a.created_at));
    const unchecked=allPix.filter(p=>!p.pix_verified_at).length;
-   out+='<section class="card hcard real-pix-review"><div class="card-head"><h2>Conferência manual de Pix</h2>'
+   out+='<section id="real-pix-review" class="card hcard real-pix-review"><div class="card-head"><h2>Conferência manual de Pix</h2>'
      +'<span class="status '+(unchecked?'pending':'done')+'">'+unchecked+' não conferido'+(unchecked===1?'':'s')+'</span></div>'
      +'<p class="subhead">Confira o valor e a entrada no extrato do seu banco ANTES de marcar um Pix como conferido. O aplicativo não acessa seu banco nem valida comprovantes. O saldo inclui todos os pagamentos registrados, mesmo os Pix ainda não conferidos.</p>';
    if(!allPix.length)out+='<div class="empty">Nenhum recebimento Pix registrado.</div>';
@@ -432,6 +432,9 @@ const finance={
    const act=button.dataset.action||"";
    if(!act.startsWith("real-finance-")&&!act.startsWith("real-pix-")&&!act.startsWith("real-report-"))return false;
    if(act==="real-report-period"){reportMonths=button.dataset.reportMonths==="12"?12:6;render();return true;}
+   if(act==="real-pix-jump"){
+     document.getElementById("real-pix-review")?.scrollIntoView({behavior:"smooth",block:"start"});return true;
+   }
    if(act==="real-pix-open"){
      const item=payments.find(p=>p.id===button.dataset.paymentId&&!p.voided_at&&p.method==="Pix");
      if(!item){toast("Pagamento Pix indisponível.");return true;}
