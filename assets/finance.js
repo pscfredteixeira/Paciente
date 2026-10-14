@@ -327,20 +327,30 @@ const finance={
        +'</form></section>';
    }
    const filtered=patients().filter(p=>filter==="all"||
-      (filter==="open"?summary(p.id).pending>0:filter==="credit"?summary(p.id).credit>0:summary(p.id).net===0));
+      (filter==="open"?summary(p.id).pending>0:filter==="credit"?summary(p.id).credit>0:filter==="clear"?
+       (summary(p.id).net===0&&summary(p.id).hasMovement):!summary(p.id).hasMovement))
+      .sort((a,b)=>{
+        const A=patientPosition(a.id),B=patientPosition(b.id);
+        if(filter==="open")return B.pending-A.pending||a.full_name.localeCompare(b.full_name,"pt-BR");
+        if(filter==="credit")return B.credit-A.credit||a.full_name.localeCompare(b.full_name,"pt-BR");
+        return a.full_name.localeCompare(b.full_name,"pt-BR");
+      });
    out+='<section class="card hcard real-finance-list"><div class="card-head"><h2>Saldo por paciente</h2><button class="btn sm" data-action="real-finance-refresh">Atualizar</button></div>'
      +'<div class="chip-bar real-finance-chips">'
-     +[['all','Todos'],['open','Pendentes'],['credit','Com crédito'],['clear','Em dia']].map(([key,label])=>
+     +[['all','Todos'],['open','Pendentes'],['credit','Com crédito'],['clear','Em dia'],['unused','Sem movimentação']].map(([key,label])=>
       '<button class="chip '+(filter===key?'active':'')+'" data-action="real-finance-filter" data-finance-filter="'+key+'">'+label+'</button>').join('')
      +'</div>';
    if(!filtered.length)out+='<div class="empty">Nenhum paciente neste filtro.</div>';
    for(const p of filtered){
-      const b=summary(p.id),mark=b.pending?"A receber":b.credit?"Crédito disponível":"Em dia";
-      const amount=b.pending?b.pending:b.credit;
+      const b=patientPosition(p.id);
       out+='<div class="real-finance-patient"><div class="real-finance-patient-info"><strong>'+esc(p.full_name)+'</strong>'
-       +'<small>Débitos '+brl(b.charges)+' · Recebidos '+brl(b.received)+'</small></div>'
-       +'<div class="real-finance-patient-balance"><small>'+mark+'</small><strong>'+brl(amount)+'</strong></div>'
-       +'<button class="btn sm" data-action="real-finance-new-for" data-patient-id="'+esc(p.id)+'">Receber</button></div>';
+       +'<small>'+b.chargedSessions+' sessão'+(b.chargedSessions===1?'':'ões')+' cobrada'+(b.chargedSessions===1?'':'s')+
+         ' · Débitos '+brl(b.charges)+' · Recebidos '+brl(b.received)+'</small>'
+       +(b.lastCharged?'<small>Última sessão cobrada: '+esc(b.lastCharged.split("-").reverse().join("/"))+'</small>':'')+'</div>'
+       +'<div class="real-finance-patient-balance"><small>'+b.label+'</small><strong>'+brl(b.amount)+'</strong></div>'
+       +'<div class="real-finance-patient-actions">'
+       +'<button class="btn sm" data-action="real-finance-open-patient" data-patient-id="'+esc(p.id)+'">Ver ficha</button>'
+       +'<button class="btn primary sm" data-action="real-finance-new-for" data-patient-id="'+esc(p.id)+'">Receber</button></div></div>';
    }
    out+='</section>';
    const movements=[];
