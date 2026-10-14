@@ -450,6 +450,29 @@ const finance={
      +'</tr></thead><tbody>'+months.slice().reverse().map(m=>
        '<tr><th scope="row">'+esc(m.label)+'</th><td>'+brl(m.received)+'</td><td>'+brl(m.charged)+'</td><td>'+m.done+'</td></tr>'
      ).join('')+'</tbody></table></div></section>';
+   const selectedMonth=closingMonth||current;
+   const closing=monthClosing(selectedMonth);
+   out+='<section class="card hcard real-month-close">'
+     +'<div class="card-head"><div><h2>Fechamento mensal · prévia</h2>'
+     +'<p class="real-month-close-hint">Conferência administrativa. Não bloqueia o mês, não emite documento fiscal e pode mudar após correções.</p></div></div>'
+     +'<div class="real-month-close-toolbar">'
+     +'<label class="field">Mês de referência<select data-finance-month aria-label="Selecionar mês para conferência">'
+     +recentClosingMonths().map(m=>'<option value="'+m+'"'+(m===selectedMonth?' selected':'')+'>'+new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric",timeZone:"UTC"}).format(new Date(m+"-15T12:00:00Z"))+'</option>').join('')
+     +'</select></label>'
+     +'<button class="btn primary sm" data-action="real-report-export-month">Exportar CSV para Excel</button></div>'
+     +'<div class="real-finance-metrics real-finance-metrics-sm">'
+     +[['Cobrado no mês',brl(closing.charged)],['Recebido no mês',brl(closing.received)],
+       ['Pix ainda não conferidos',closing.pixPending]].map(([label,value])=>
+       '<div class="real-finance-metric"><small>'+esc(label)+'</small><strong>'+value+'</strong></div>').join('')+'</div>'
+     +'<p class="real-month-close-detail">'+closing.sessions+' sessão'+(closing.sessions===1?'':'ões')+' realizada'+(closing.sessions===1?'':'s')
+     +' · '+closing.pixVerified+' Pix conferido'+(closing.pixVerified===1?'':'s')
+     +' · '+closing.voided+' pagamento'+(closing.voided===1?'':'s')+' estornado'+(closing.voided===1?'':'s')+'</p>'
+     +(closing.pixPending?'<div class="real-month-close-alert"><strong>Atenção:</strong> há '+closing.pixPending+' Pix registrado'+(closing.pixPending===1?'':'s')
+       +' nesse mês que ainda não '+(closing.pixPending===1?'foi':'foram')+' conferido'+(closing.pixPending===1?'':'s')
+       +' manualmente. <button class="btn sm" data-view="finance">Abrir Financeiro</button></div>':
+       '<p class="real-month-close-detail">Nenhum Pix desse mês aguarda conferência manual.</p>')
+     +'<p class="real-month-close-privacy">O CSV contém nomes de pacientes, não inclui CPF ou e-mail e é gerado somente neste aparelho. Salve-o em local privado. Pagamentos estornados aparecem identificados e não entram no total recebido.</p>'
+     +'</section>';
    const debts=patients().map(p=>({patient:p,...summary(p.id)}))
       .filter(x=>x.pending>0).sort((a,b)=>b.pending-a.pending);
    const credits=patients().map(p=>({patient:p,...summary(p.id)}))
