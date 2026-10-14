@@ -232,36 +232,45 @@ const stmt={
    if(!authorized())return"";
    const fin=getFinance()?.state||{};
    let out='<section class="card hcard real-statement" id="real-statement">'
-     +'<div class="card-head real-statement-heading"><div><h2>Conferir Pix com extrato CSV</h2>'
+     +'<div class="card-head real-statement-heading"><div><h2>Conferir Pix com extrato CSV ou OFX</h2>'
      +'<p class="real-statement-caption">Compare o extrato do banco com os Pix registrados, sem enviar o arquivo.</p></div>'
      +'<button class="btn sm" data-action="real-statement-toggle" aria-expanded="'+(open?'true':'false')+'" aria-controls="real-statement-content">'
-     +(open?"Fechar":"Importar CSV")+'</button></div>';
+     +(open?"Fechar":"Importar extrato")+'</button></div>';
    if(!open)return out+'</section>';
    out+='<div id="real-statement-content" class="real-statement-body">'
      +'<p class="real-statement-privacy">O arquivo é lido somente no seu aparelho e descartado ao sair da conta ou atualizar a página. Não são importados pagamentos automaticamente. Apenas as conferências que você confirmar serão salvas.</p>'
-     +'<label class="field real-statement-picker">Arquivo CSV do banco (.csv ou .txt, até 2 MB)'
-     +'<input id="real-statement-file" type="file" accept=".csv,.txt,text/csv,text/plain"></label>';
+     +'<label class="field real-statement-picker">Arquivo do banco (CSV ou OFX, até 2 MB)'
+     +'<input id="real-statement-file" type="file" accept=".csv,.txt,.ofx,text/csv,text/plain,application/x-ofx"></label>';
    if(loading)out+='<p role="status" class="real-session-muted">Lendo o extrato...</p>';
    if(error)out+='<p class="real-statement-error" role="alert">'+esc(error)+'</p>';
    if(!matrix.length)return out+'</div></section>';
    const headers=columnNames(),kinds=[["date","Data"],["amount","Valor"],["description","Descrição"],["type","Tipo de movimentação"],["reference","Identificador Pix"]];
-   out+='<div class="real-statement-fileinfo"><span>'+esc(filename)+'</span><span>'+matrix.length+' linhas lidas</span></div>'
-     +'<div class="real-statement-mapping"><label class="field">Linha do cabeçalho'
-     +'<select data-statement-header="yes">'+matrix.slice(0,Math.min(matrix.length-1,12)).map((line,i)=>
-      '<option value="'+i+'"'+(headerRow===i?' selected':'')+'>'+(i+1)+' — '+esc(line.slice(0,2).join(" · ").slice(0,75))+'</option>').join('')+'</select></label>';
-   for(const [kind,label] of kinds){
-     out+='<label class="field">'+label+(kind==="date"||kind==="amount"?" *":" (opcional)")
-       +'<select data-statement-column="'+kind+'"><option value="-1">Não usar</option>'
-       +headers.map((col,i)=>'<option value="'+i+'"'+(mapping[kind]===i?' selected':'')+'>'
-         +esc(col||"Coluna "+(i+1))+'</option>').join('')+'</select></label>';
+   out+='<div class="real-statement-fileinfo"><span>'+esc(filename)+' · '+esc(format)+'</span><span>'+(matrix.length-1)+' linhas</span></div>';
+   if(format==="OFX"){
+     out+='<div class="real-statement-ofx-info"><strong>Arquivo OFX reconhecido: colunas identificadas automaticamente.</strong>'
+       +'<p>'+importInfo.eligible+' entradas positivas · '+importInfo.outgoing+' saídas ignoradas'
+       +(importInfo.invalid?' · '+importInfo.invalid+' linhas incompletas ignoradas':'')+'</p>'
+       +(importInfo.warning?'<p>'+esc(importInfo.warning)+'</p>':'')
+       +'<p>Se seu banco não escreve Pix na descrição, ative a opção para incluir outros créditos positivos e revise cada sugestão.</p>'
+       +'</div>';
+   }else{
+     out+='<div class="real-statement-mapping"><label class="field">Linha do cabeçalho'
+       +'<select data-statement-header="yes">'+matrix.slice(0,Math.min(matrix.length-1,12)).map((line,i)=>
+        '<option value="'+i+'"'+(headerRow===i?' selected':'')+'>'+(i+1)+' — '+esc(line.slice(0,2).join(" · ").slice(0,75))+'</option>').join('')+'</select></label>';
+     for(const [kind,label] of kinds){
+       out+='<label class="field">'+label+(kind==="date"||kind==="amount"?" *":" (opcional)")
+         +'<select data-statement-column="'+kind+'"><option value="-1">Não usar</option>'
+         +headers.map((col,i)=>'<option value="'+i+'"'+(mapping[kind]===i?' selected':'')+'>'
+           +esc(col||"Coluna "+(i+1))+'</option>').join('')+'</select></label>';
+     }
+     out+='</div>';
    }
-   out+='</div>';
    if(mapping.date<0||mapping.amount<0){
      return out+'<p class="real-statement-error">Selecione as colunas Data e Valor para comparar o extrato.</p></div></section>';
    }
    out+='<div class="real-statement-options">'
      +'<label><input type="checkbox" data-statement-option="generic"'+(includeGeneric?' checked':'')+'> Incluir outras entradas positivas, mesmo sem a palavra Pix (revisar com cuidado)</label>'
-     +'<label><input type="checkbox" data-statement-option="reference"'+(saveReference?' checked':'')+'> Salvar o identificador do Pix ao confirmar, quando disponível</label>'
+     +'<label><input type="checkbox" data-statement-option="reference"'+(saveReference?' checked':'')+'> Salvar o identificador bancário ao confirmar (opcional; pode não ser o EndToEndId do Pix)</label>'
      +'</div>';
    const matches=suggestedMatches(),eligible=matches.filter(r=>r.candidates.length||completed.has(r.rowIndex));
    out+='<div class="real-statement-results"><div class="real-statement-results-head"><strong>Comparação de lançamentos</strong>'
