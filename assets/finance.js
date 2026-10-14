@@ -177,6 +177,33 @@ const finance={
    }catch(_){return{ok:false,message:"Não foi possível estornar o pagamento. Tente novamente."};}
    finally{saving=false;signal();}
  },
+ async verifyPix(id,confirm,reference=null){
+   const db=auth();
+   if(!db||loading||saving)return{ok:false,message:"Aguarde o carregamento ou faça login novamente."};
+   const payment=payments.find(p=>p.id===id);
+   if(!payment||payment.method!=="Pix"||payment.voided_at)
+     return{ok:false,message:"Selecione um pagamento Pix válido e não estornado."};
+   const ref=String(reference||"").trim().toUpperCase();
+   if(confirm&&ref&&(ref.length<3||ref.length>100||!/^[A-Z0-9._:-]+$/.test(ref)))
+     return{ok:false,message:"O identificador do Pix deve ter entre 3 e 100 caracteres: letras, números, ponto, hífen ou dois-pontos."};
+   saving=true;signal();
+   try{
+     const {data,error:failure}=await db.rpc("set_pix_verification",{
+       p_payment_id:id,p_verified:!!confirm,p_reference:confirm?(ref||null):null
+     });
+     if(failure)throw failure;
+     if(!data?.payment_id)throw Error("Resposta inválida");
+     if(editingPixId===id){editingPixId=null;pixRefDraft="";}
+     return {ok:true,message:data.unchanged?
+       "Esta conferência já estava registrada; nada foi duplicado.":
+       confirm?"Pix marcado como conferido manualmente. O banco não foi consultado pelo aplicativo.":
+       "Conferência manual desfeita. O registro do pagamento foi preservado."};
+   }catch(e){return{ok:false,message:e?.code==="23505"?
+     "Este identificador Pix já foi usado para conferir outro recebimento ativo.":
+     e?.code==="22023"?"Não foi possível conferir. Revise o identificador ou desfaça a conferência anterior.":
+     "Não foi possível atualizar a conferência do Pix. Tente novamente."};}
+   finally{saving=false;signal();}
+ },
  summary,ledgerFor,
  render({head,I,esc}){
    captureDraft();capturePixDraft();
