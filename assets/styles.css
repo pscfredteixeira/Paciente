@@ -402,3 +402,28 @@
  .real-manual-section .field input,.real-manual-section .field select{font-size:16px}
  .real-manual-history{gap:6px}
 }
+
+/* Sprint 13 — pendências por paciente, com navegação direta e resumo na ficha. */
+.real-finance-patient-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:0 0 auto}
+.real-finance-patient-actions .btn{min-height:38px;white-space:normal}
+.real-home-pending{margin-top:20px}
+.real-home-pending .card-head{align-items:center;flex-wrap:wrap;gap:12px}
+.real-home-pending-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid var(--border)}
+.real-home-pending-row>div{min-width:0;flex:1 1 200px}
+.real-home-pending-row>div strong{display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.real-home-pending-row>div small{display:block;margin-top:4px;font-size:11px;line-height:1.5;color:var(--ink-muted)}
+.real-home-due{color:var(--dark);font-size:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.real-home-pending-row>.btn{flex:0 0 auto;min-height:38px}
+.real-home-pending-footer{display:flex;justify-content:flex-end;padding-top:14px}
+.real-home-pending-footer .btn{min-height:40px}
+.real-patient-balance-stat{background:#f8f3fe}
+.real-patient-balance-stat strong{overflow-wrap:anywhere}
+@media(max-width:630px){
+ .real-finance-patient-actions{width:100%;flex:1 1 100%;justify-content:flex-start}
+ .real-finance-patient-actions .btn{flex:1 1 auto;min-height:42px}
+ .real-home-pending-row{flex-wrap:wrap;gap:9px}
+ .real-home-pending-row>div{flex:1 1 100%}
+ .real-home-pending-row>.btn{margin-left:auto;min-height:42px}
+ .real-home-due{margin-right:auto}
+ .real-home-pending-footer .btn{width:100%}
+}
