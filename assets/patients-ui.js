@@ -8,6 +8,15 @@
   let filter = "active";
   const initials = value => String(value || "").trim().split(/\s+/).slice(0, 2).map(x => x.slice(0,1).toUpperCase()).join("");
   const store = () => window.ConsultorioPatients;
+  const formatCpf = raw => {
+    const value = String(raw || "").replace(/\D/g, "");
+    return value.length === 11 ? value.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4") : "";
+  };
+  const formatBirthDate = iso => {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+    const [year,month,day] = iso.split("-");
+    return day + "/" + month + "/" + year;
+  };
   const ui = {
     reset() { chosen = null; editor = null; filter = "active"; },
     render(helpers) {
@@ -26,13 +35,20 @@
         const name = editing?.full_name || "";
         const fee = editing ? (editing.fee_cents / 100).toFixed(2).replace(".", ",") : "";
         const cadence = editing?.cadence || "Semanal";
+        const birthDate = editing?.birth_date || "";
+        const cpf = formatCpf(editing?.cpf);
+        const email = editing?.email || "";
         const options = ["Semanal","Quinzenal","Mensal","Avulsa"].map(x => "<option value='" + x + "'" + (x === cadence ? " selected" : "") + ">" + x + "</option>").join("");
         output += "<section class='card hcard real-patient-form'><div class='card-head'><h2>" + (editing ? "Editar paciente" : "Novo paciente") + "</h2><span class='status unlinked'>Privado</span></div>"
-          + "<p class='subhead'>Registre somente identificação, valor e frequência. Não inclua informações clínicas.</p>"
+          + "<p class='subhead'>Informações administrativas do paciente. Data de nascimento, CPF e e-mail são opcionais e privados. Não inclua informações clínicas.</p>"
           + "<form id='real-patient-form' class='patient-form-grid' autocomplete='off'>"
           + "<label class='field patient-wide'>Nome do paciente<input id='real-patient-name' type='text' minlength='2' maxlength='120' required placeholder='Nome para identificação' value='" + esc(name) + "'></label>"
           + "<label class='field'>Valor por sessão (R$)<input id='real-patient-fee' type='text' inputmode='decimal' required placeholder='Ex.: 240,00' value='" + esc(fee) + "'></label>"
           + "<label class='field'>Frequência prevista<select id='real-patient-cadence'>" + options + "</select></label>"
+          + "<div class='patient-wide patient-form-section-title'>Dados pessoais <small>(opcionais)</small></div>"
+          + "<label class='field'>Data de nascimento<input id='real-patient-birth-date' type='date' min='1900-01-01' max='" + new Date().toLocaleDateString("en-CA", {timeZone:"America/Sao_Paulo"}).replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, "$3-$1-$2") + "' value='" + esc(birthDate) + "'></label>"
+          + "<label class='field'>CPF<input id='real-patient-cpf' type='text' inputmode='numeric' maxlength='14' placeholder='000.000.000-00' autocomplete='off' value='" + esc(cpf) + "'></label>"
+          + "<label class='field patient-wide'>E-mail<input id='real-patient-email' type='email' maxlength='254' inputmode='email' autocomplete='off' autocapitalize='off' spellcheck='false' placeholder='paciente@exemplo.com' value='" + esc(email) + "'></label>"
           + "<div class='patient-form-actions patient-wide'><button class='btn' type='button' data-action='real-patient-cancel'>Cancelar</button>"
           + "<button class='btn primary' type='submit'" + (state.busy ? " disabled" : "") + ">" + I("checkcircle") + (editing ? " Salvar alterações" : " Cadastrar paciente") + "</button></div></form></section>";
       }
@@ -42,6 +58,12 @@
           + "<div class='profile-grid'><div class='profile-stat'><small>Valor por sessão</small><strong>" + money(row.fee_cents / 100) + "</strong></div>"
           + "<div class='profile-stat'><small>Frequência</small><strong>" + esc(row.cadence) + "</strong></div>"
           + "<div class='profile-stat'><small>Situação</small><strong>" + (row.is_active ? "Ativo" : "Arquivado") + "</strong></div></div>"
+          + "<div class='real-patient-personal'><div class='card-head'><h3>Dados pessoais</h3><span class='muted'>Privado</span></div>"
+          + "<div class='profile-grid'>"
+          + "<div class='profile-stat'><small>Data de nascimento</small><strong>" + esc(formatBirthDate(row.birth_date) || "Não informado") + "</strong></div>"
+          + "<div class='profile-stat'><small>CPF</small><strong class='patient-sensitive-value'>" + esc(formatCpf(row.cpf) || "Não informado") + "</strong></div>"
+          + "<div class='profile-stat patient-email-stat'><small>E-mail</small><strong>" + esc(row.email || "Não informado") + "</strong></div>"
+          + "</div></div>"
           + "<div class='patient-form-actions'><button class='btn' data-action='real-patient-back'>Voltar</button>"
           + "<button class='btn' data-action='real-patient-edit' data-id='" + esc(row.id) + "'>Editar</button>"
           + "<button class='btn " + (row.is_active ? "soft" : "primary") + "' data-action='real-patient-toggle' data-id='" + esc(row.id) + "'" + (state.busy ? " disabled" : "") + ">" + (row.is_active ? "Arquivar" : "Reativar") + "</button></div>"
@@ -123,13 +145,16 @@
       const name = document.getElementById("real-patient-name")?.value || "";
       const raw = (document.getElementById("real-patient-fee")?.value || "").trim();
       const cadence = document.getElementById("real-patient-cadence")?.value || "Semanal";
+      const birth_date = document.getElementById("real-patient-birth-date")?.value || null;
+      const cpf = document.getElementById("real-patient-cpf")?.value || null;
+      const email = document.getElementById("real-patient-email")?.value || null;
       if (!/^\d{1,6}([.,]\d{1,2})?$/.test(raw)) {
         notify("Informe um valor em reais, como 240,00."); return true;
       }
       const parts = raw.replace(",", ".").split(".");
       const cents = Number(parts[0]) * 100 + Number((parts[1] || "").padEnd(2,"0"));
       const id = editor === "new" ? null : editor;
-      const result = await store().save({ full_name: name, fee_cents: cents, cadence }, id);
+      const result = await store().save({ full_name: name, fee_cents: cents, cadence, birth_date, cpf, email }, id);
       if (result.ok) { editor = null; chosen = result.id; render(); void window.ConsultorioSessions?.loadPatientHistory(result.id); notify(id ? "Cadastro atualizado." : "Paciente cadastrado."); }
       else notify(result.message);
       return true;
