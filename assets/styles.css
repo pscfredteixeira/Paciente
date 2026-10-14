@@ -168,3 +168,48 @@
  .real-patient-personal .patient-email-stat{grid-column:1 / -1}
 }
 @media(max-width:350px){.real-patient-personal .profile-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Sprint 8 — painel financeiro real, saldos e extratos responsivos */
+.real-finance-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 20px}
+.real-finance-metric{min-width:0;background:#fff;border:1px solid var(--border);border-radius:13px;padding:18px 15px}
+.real-finance-metric small{display:block;font-size:12px;color:var(--ink-muted);line-height:1.4;font-weight:700}
+.real-finance-metric strong{display:block;font-size:clamp(18px,2vw,26px);line-height:1.2;font-weight:800;letter-spacing:-.5px;color:var(--ink);margin:8px 0 0;overflow-wrap:anywhere}
+.real-finance-form-wrap{margin:18px 0}
+.real-finance-chips{gap:8px;padding:2px 0 12px}
+.real-finance-patient{display:flex;align-items:center;gap:16px;padding:16px 0;border-top:1px solid var(--border);min-width:0}
+.real-finance-patient-info{flex:1 1 170px;min-width:0}
+.real-finance-patient-info strong{display:block;font-size:14px;overflow-wrap:anywhere}
+.real-finance-patient-info small{display:block;font-size:12px;color:var(--ink-muted);margin-top:4px;line-height:1.4}
+.real-finance-patient-balance{text-align:right;min-width:110px}
+.real-finance-patient-balance small{display:block;font-size:11px;color:var(--ink-muted)}
+.real-finance-patient-balance strong{display:block;font-size:15px;color:var(--dark);margin-top:3px;white-space:nowrap}
+.real-finance-movements{margin-top:19px}
+.real-finance-movement{display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid var(--border);min-width:0}
+.real-finance-movement>div{min-width:0;flex:1 1 auto}
+.real-finance-movement>div strong{display:block;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.real-finance-movement>div small{display:block;font-size:11px;color:var(--ink-muted);margin-top:4px;overflow-wrap:anywhere}
+.real-finance-movement>.is-incoming{color:var(--teal);white-space:nowrap}
+.real-finance-movement>.is-debit{color:var(--amber-ink);white-space:nowrap}
+.real-finance-movement>.is-voided{opacity:.55;text-decoration:line-through}
+.real-finance-extract-title{font-size:15px;font-weight:800;margin:20px 0 13px}
+.real-patient-finance{margin-top:17px}
+.real-finance-metrics-sm{grid-template-columns:repeat(3,minmax(0,1fr));margin:4px 0 13px;gap:9px}
+.real-finance-metrics-sm .real-finance-metric{padding:12px}
+.real-finance-metrics-sm .real-finance-metric strong{font-size:17px}
+.real-finance-home-grid{margin-top:18px}
+@media(max-width:960px){.real-finance-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){
+ .real-finance-metrics{gap:8px}
+ .real-finance-metric{padding:14px 11px}
+ .real-finance-metric small{font-size:11px}
+ .real-finance-metric strong{font-size:19px}
+ .real-finance-patient{flex-wrap:wrap;gap:11px}
+ .real-finance-patient-info{flex:1 1 100%}
+ .real-finance-patient-balance{text-align:left;min-width:0;flex:1}
+ .real-finance-patient>.btn{margin-left:auto}
+ .real-finance-movement{gap:8px;flex-wrap:wrap}
+ .real-finance-movement .btn{margin-left:auto}
+ .real-finance-metrics-sm{grid-template-columns:1fr 1fr}
+ .real-patient-finance .card-head{align-items:flex-start;flex-wrap:wrap}
+}
+@media(max-width:350px){.real-finance-metrics{grid-template-columns:1fr}.real-finance-metrics-sm{grid-template-columns:1fr}}
