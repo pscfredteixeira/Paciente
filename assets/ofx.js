@@ -19,7 +19,7 @@ const getField=(block,name)=>{
  return m?entities(m[1].trim()).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").trim():"";
 };
 const validDate=s=>{
- const m=String(s||"").match(/^(\d{4})(\d{2})(\d{2})(?=\D|$)/);
+ const m=String(s||"").match(/^(\d{4})(\d{2})(\d{2})/);
  if(!m)return null;
  const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]);
  const dt=new Date(Date.UTC(y,mo-1,d,12));
