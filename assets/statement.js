@@ -181,8 +181,13 @@ const stmt={
    if(!Number.isSafeInteger(n)||n<0||n>=Math.min(12,matrix.length-1))return;
    headerRow=n;suggestMapping();chosen.clear();completed.clear();notify();
  },
- setOption(kind,yes){if(kind==="generic")includeGeneric=!!yes;if(kind==="reference")saveReference=!!yes;
-   chosen.clear();completed.clear();notify();},
+ setOption(kind,yes){
+   if(kind==="generic"){includeGeneric=!!yes;chosen.clear();}
+   else if(kind==="reference")saveReference=!!yes;
+   else return;
+   // Alternar a gravação opcional do ID não pode apagar a escolha do paciente.
+   notify();
+ },
  choose(index,paymentId){
    const idx=Number(index),row=suggestedMatches().find(r=>r.rowIndex===idx);
    if(!row||!row.candidates.some(p=>p.id===paymentId)){chosen.delete(idx);notify();return;}
