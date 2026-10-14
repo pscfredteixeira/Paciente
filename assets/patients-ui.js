@@ -154,7 +154,14 @@
         + "</section><p class='foot-note'>Os registros ficam no banco protegido, não no GitHub. Cadastros arquivados continuam preservados.</p>";
       return output;
     },
-    select(id, render) { chosen = id; editor = null; clearDraft(); render();void window.ConsultorioSessions?.loadPatientHistory(id); },
+    select(id, render, { forceHistory = false } = {}) {
+      chosen = id;
+      editor = null;
+      clearDraft();
+      render();
+      // A seleção após novo atendimento exige leitura posterior à gravação.
+      return window.ConsultorioSessions?.loadPatientHistory(id,forceHistory);
+    },
     async handleClick(button, render, notify) {
       const act = button.dataset.action || "";
       if (!act.startsWith("real-patient-")) return false;
