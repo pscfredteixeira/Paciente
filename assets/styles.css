@@ -269,3 +269,22 @@
  .real-report-month{min-width:50px}
  .real-report-table th,.real-report-table td{padding:10px 7px}
 }
+
+/* Sprint 9.1 — Pix compacto, expansão progressiva no celular. */
+.real-pix-review.is-compact{padding-block:18px}
+.real-pix-review.is-compact .card-head{margin-bottom:9px}
+.real-pix-head{gap:10px;align-items:center;flex-wrap:wrap}
+.real-pix-head h2{margin:0;line-height:1.35}
+.real-pix-head .status{font-size:11px;white-space:nowrap;max-width:100%}
+.real-pix-intro{font-size:13px;line-height:1.55;margin:0 0 12px;color:var(--ink-muted);max-width:680px}
+.real-pix-toggle{min-height:42px;gap:10px;white-space:normal}
+.real-pix-expanded{border-top:1px solid var(--border);margin-top:16px;padding-top:14px}
+.real-pix-guidance{font-size:12px;line-height:1.6;background:#f8f5fc;border-radius:10px;padding:11px 13px;color:var(--ink-muted);margin:0 0 14px}
+@media(max-width:480px){
+ .real-pix-review.is-compact{padding:17px 15px}
+ .real-pix-head h2{font-size:16px;line-height:1.25}
+ .real-pix-head .status{font-size:11px}
+ .real-pix-intro{font-size:12px;margin:0 0 11px}
+ .real-pix-toggle{width:100%;justify-content:space-between;min-height:44px}
+ .real-pix-expanded{padding-top:11px;margin-top:13px}
+}
