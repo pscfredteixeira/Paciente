@@ -38,9 +38,10 @@ const store={
    }catch(_){if(req===weekRevision){records=new Map();weekError=readError;}}
    finally{if(req===weekRevision){weekLoading=false;notify();}}
  },
- async loadPatientHistory(patientId){
+ async loadPatientHistory(patientId,force=false){
    const db=client();if(!db||!patientId)return;
-   if(historyLoading&&historyPatientId===patientId)return;
+   // Após registrar sessão, nunca reutilizar histórico iniciado antes da gravação.
+   if(historyLoading&&historyPatientId===patientId&&!force)return;
    const req=++historyRevision;historyPatientId=patientId;historyLoading=true;historyError="";notify();
    try{
      const {data,error}=await db.from("session_records").select(fields).eq("patient_id",patientId)
