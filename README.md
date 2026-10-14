@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 10
+# Meu Consultório — Sprint 11
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -22,7 +22,7 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 ## Partes que ainda não estão implementadas
 
-**Conciliação bancária automática:** ainda não implementada. O Sprint 10 permite **comparar CSV bancário localmente** com pagamentos Pix cadastrados (sem enviar o arquivo, criar cobranças ou confirmar automaticamente). A conferência continua **exclusivamente manual**, sem acesso a banco ou identificação definitiva do pagador.
+**Conciliação bancária automática:** ainda não implementada. O Sprint 11 permite **comparar CSV e OFX bancários localmente** com pagamentos Pix cadastrados (sem enviar o arquivo, criar cobranças ou confirmar automaticamente). A conferência continua **exclusivamente manual**, sem acesso a banco ou identificação definitiva do pagador.
 
 ## Código modular
 
@@ -36,6 +36,7 @@ assets/
   patients-ui.js
   finance.js
   statement.js
+  ofx.js
   calendar.js
   sessions.js
   agenda-real.js
@@ -61,6 +62,7 @@ docs/
   SPRINT_08_FINANCEIRO.md
   SPRINT_09_RELATORIOS_PIX.md
   SPRINT_10_CSV_PIX.md
+  SPRINT_11_OFX.md
 ```
 
 ## Segurança
@@ -71,8 +73,8 @@ Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled
 
 [Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md) · [Sessões e débitos reais](./docs/SPRINT_07_SESSOES.md).
 
-[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md).
+[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md) · [Leitura OFX local](./docs/SPRINT_11_OFX.md).
 
 ## Próxima etapa
 
-Validar o importador local com um CSV pequeno do banco do usuário. Para formatos não identificados, ajustar o mapeamento de colunas com exemplos fictícios. Só depois considerar OFX ou uma integração bancária autorizada.
+Validar o importador local com um CSV ou OFX pequeno do banco do usuário, sem compartilhar dados financeiros reais. Ajustar diferenças de formato com exemplos fictícios, se necessário; nenhuma conexão bancária foi criada.
