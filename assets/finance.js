@@ -15,6 +15,14 @@ const realToday=()=>{
  return p.year+"-"+p.month+"-"+p.day;
 };
 const brl=n=>(Number(n||0)/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const brazilDate=raw=>{
+ const date=new Date(raw);
+ if(!Number.isFinite(date.getTime()))return"";
+ const pt=Object.fromEntries(new Intl.DateTimeFormat("en-US",{
+   timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"
+ }).formatToParts(date).map(e=>[e.type,e.value]));
+ return pt.year+"-"+pt.month+"-"+pt.day;
+};
 const statuses={done:"Realizada",missed_charge:"Falta cobrada",missed_nocharge:"Falta sem cobrança",
  cancelled:"Cancelada",voided:"Registro desfeito"};
 const fallback="Não foi possível consultar o financeiro. Tente novamente.";
@@ -39,7 +47,7 @@ const pagination=async(db,table,columns,order)=>{
 const ledgerFor=id=>{
  const entries=[];
  for(const s of sessions.filter(x=>x.patient_id===id&&x.charge_cents>0)){
-   entries.push({type:"debit",id:s.id,day:String(s.scheduled_at||"").slice(0,10),
+   entries.push({type:"debit",id:s.id,day:brazilDate(s.scheduled_at),
      at:s.scheduled_at,amount_cents:s.charge_cents,label:"Sessão · "+(statuses[s.status]||"Atendimento"),voided:false});
  }
  for(const p of payments.filter(x=>x.patient_id===id)){
@@ -117,8 +125,10 @@ const finance={
    if(!patient)return{ok:false,message:"Selecione um paciente cadastrado."};
    const cents=parseAmount(payload.amount);
    if(cents===null)return{ok:false,message:"Informe um valor entre R$ 0,01 e R$ 999.999,99."};
-   if(!/^\d{4}-\d{2}-\d{2}$/.test(payload.paid_on||"")||
-      (new Date(payload.paid_on+"T12:00:00Z")).toISOString().slice(0,10)!==payload.paid_on||
+   const parsedDay=/^\d{4}-\d{2}-\d{2}$/.test(payload.paid_on||"")?
+      new Date(payload.paid_on+"T12:00:00Z"):null;
+   if(!parsedDay||!Number.isFinite(parsedDay.getTime())||
+      parsedDay.toISOString().slice(0,10)!==payload.paid_on||
       payload.paid_on<"2000-01-01"||payload.paid_on>realToday())
      return{ok:false,message:"Confira a data do pagamento (não pode ser futura)."};
    if(!["Pix","Dinheiro","Transferência","Cartão","Outro"].includes(payload.method))
@@ -204,7 +214,7 @@ const finance={
    }
    out+='</section>';
    const movements=[];
-   for(const s of sessions.filter(s=>s.charge_cents>0))movements.push({id:s.id,date:s.scheduled_at,type:"debit",amount:s.charge_cents,patient_id:s.patient_id,description:"Sessão cobrada"});
+   for(const s of sessions.filter(s=>s.charge_cents>0))movements.push({id:s.id,date:s.scheduled_at,day:brazilDate(s.scheduled_at),type:"debit",amount:s.charge_cents,patient_id:s.patient_id,description:"Sessão cobrada"});
    for(const p of payments)movements.push({id:p.id,date:p.paid_on+"T12:00:00",type:"payment",amount:p.amount_cents,patient_id:p.patient_id,description:p.method,voided:!!p.voided_at});
    movements.sort((a,b)=>b.date.localeCompare(a.date));
    out+='<section class="card hcard real-finance-movements"><div class="card-head"><h2>Movimentações recentes</h2><span class="muted">Débitos e recebimentos</span></div>';
@@ -212,7 +222,7 @@ const finance={
    for(const row of movements.slice(0,50)){
      const who=getPatient(row.patient_id);
      out+='<div class="real-finance-movement"><div><strong>'+esc(who?.full_name||"Paciente indisponível")+'</strong>'
-        +'<small>'+esc(row.description)+' · '+esc(row.date.slice(0,10).split("-").reverse().join("/"))
+        +'<small>'+esc(row.description)+' · '+esc((row.day||row.date.slice(0,10)).split("-").reverse().join("/"))
         +(row.voided?' · Estornado':'')+'</small></div>'
         +'<strong class="'+(row.type==="payment"?"is-incoming":"is-debit")+(row.voided?" is-voided":"")+'">'+(row.type==="payment"?"−":"+")+brl(row.amount)+'</strong>'
         +(row.type==="payment"&&!row.voided?'<button class="btn sm" data-action="real-finance-void" data-payment-id="'+esc(row.id)+'">Estornar</button>':'')
