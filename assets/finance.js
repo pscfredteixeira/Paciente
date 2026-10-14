@@ -4,7 +4,7 @@
 "use strict";
 const listeners=new Set();
 let sessions=[],payments=[],audit=[],loading=false,initialized=false,error="",saving=false,revision=0;
-let filter="all",editing=false,formDraft=null,pendingRequestId=null,editingPixId=null,pixRefDraft="",pixExpanded=false,reportMonths=6;
+let filter="all",editing=false,formDraft=null,pendingRequestId=null,editingPixId=null,pixRefDraft="",pixExpanded=false,reportMonths=6,closingMonth=null;
 const signal=()=>{for(const fn of listeners){try{fn()}catch(_){}}};
 const auth=()=>window.ConsultorioAuth?.state.phase==="authorized"?window.ConsultorioAuth?.dataClient:null;
 const patients=()=>window.ConsultorioPatients?.state.rows||[];
@@ -82,6 +82,70 @@ const allSummary=()=>{
    overduePatients:all.filter(x=>x.pending>0).length,
    numPayments:active.length};
 };
+/* Fechamento é uma prévia atualizada: não bloqueia nem altera registros. */
+const monthRows=month=>{
+ const records=[];
+ for(const s of sessions){
+   const day=brazilDate(s.scheduled_at);
+   if(day.slice(0,7)!==month)continue;
+   records.push({day,type:"Sessão",name:getPatient(s.patient_id)?.full_name||"Paciente indisponível",
+     status:statuses[s.status]||s.status,
+     amount:Number(s.charge_cents||0),method:"",pix:""});
+ }
+ for(const p of payments){
+   if(p.paid_on.slice(0,7)!==month)continue;
+   records.push({day:p.paid_on,type:"Pagamento",name:getPatient(p.patient_id)?.full_name||"Paciente indisponível",
+     status:p.voided_at?"Estornado":"Recebido",
+     amount:Number(p.amount_cents||0),method:p.method,
+     pix:p.method==="Pix"?(p.voided_at?"Estornado":p.pix_verified_at?"Conferido manualmente":"Não conferido"):""});
+ }
+ records.sort((a,b)=>a.day.localeCompare(b.day)||a.type.localeCompare(b.type)||a.name.localeCompare(b.name));
+ return records;
+};
+const monthClosing=month=>{
+ const rows=monthRows(month),validCharges=rows.filter(r=>r.type==="Sessão"),
+   validPayments=rows.filter(r=>r.type==="Pagamento"&&r.status==="Recebido");
+ return {month,rows,charged:validCharges.reduce((t,r)=>t+r.amount,0),
+   received:validPayments.reduce((t,r)=>t+r.amount,0),
+   sessions:validCharges.filter(r=>r.status==="Realizada").length,
+   pixPending:validPayments.filter(r=>r.method==="Pix"&&r.pix==="Não conferido").length,
+   pixVerified:validPayments.filter(r=>r.method==="Pix"&&r.pix==="Conferido manualmente").length,
+   voided:rows.filter(r=>r.type==="Pagamento"&&r.status==="Estornado").length};
+};
+const moneyCsv=cents=>(Number(cents||0)/100).toFixed(2).replace(".",",");
+const csvCell=value=>{
+ const raw=String(value??"").replace(/[\r\n\t]+/g," ").trim();
+ // Spreadsheet formula injection defense: even a patient name must be treated as text.
+ const safe=/^[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]/.test(raw)?"'"+raw:raw;
+ return '"'+safe.replace(/"/g,'""')+'"';
+};
+const closingCsv=month=>{
+ const closing=monthClosing(month);
+ const list=[
+   ["Relatório","Meu Consultório · Prévia mensal · "+month],
+   ["Aviso","Gerado no aparelho. Valores podem mudar após correções. Não é documento fiscal."],
+   ["Aviso de privacidade","Contém nomes de pacientes. Guarde em local privado."],
+   ["Cobrado",moneyCsv(closing.charged)],
+   ["Recebido",moneyCsv(closing.received)],
+   ["Pix pendentes de conferência",closing.pixPending],
+   [],["Data","Tipo","Paciente","Situação","Valor (R$)","Forma de pagamento","Conferência Pix"],
+   ...closing.rows.map(r=>[r.day.split("-").reverse().join("/"),r.type,r.name,r.status,
+     moneyCsv(r.amount),r.method,r.pix])
+ ];
+ return "\uFEFF"+list.map(row=>row.map(csvCell).join(";")).join("\r\n")+"\r\n";
+};
+const recentClosingMonths=()=>{
+ const now=realToday().slice(0,7);
+ const [year,month]=now.split("-").map(Number);
+ const result=new Set([closingMonth||now]);
+ for(let i=0;i<24;i++){
+   const d=new Date(Date.UTC(year,month-1-i,15,12));
+   result.add(d.toISOString().slice(0,7));
+ }
+ for(const s of sessions){const key=brazilDate(s.scheduled_at).slice(0,7);if(key&&key<="9999-12")result.add(key);}
+ for(const p of payments){const key=p.paid_on?.slice(0,7);if(key&&key<="9999-12")result.add(key);}
+ return [...result].filter(x=>/^\d{4}-\d{2}$/.test(x)&&x<=now).sort().reverse();
+};
 const fields=["real-finance-patient","real-finance-amount","real-finance-date","real-finance-method","real-finance-note"];
 const captureDraft=()=>{
  if(!editing||typeof document==="undefined")return;
@@ -103,9 +167,9 @@ const pixStatus=payment=>{
 };
 const finance={
  get state(){return{sessions:sessions.slice(),payments:payments.slice(),audit:audit.slice(),
-  loading,initialized,error,saving,filter,editing,editingPixId,reportMonths,summary:allSummary()};},
+  loading,initialized,error,saving,filter,editing,editingPixId,reportMonths,closingMonth,summary:allSummary()};},
  subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},
- clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;filter="all";editingPixId=null;pixRefDraft="";pixExpanded=false;reportMonths=6;resetForm();signal();},
+ clear(){++revision;sessions=[];payments=[];audit=[];loading=false;initialized=false;error="";saving=false;filter="all";editingPixId=null;pixRefDraft="";pixExpanded=false;reportMonths=6;closingMonth=null;resetForm();signal();},
  ensure(){if(auth()&&!initialized&&!loading&&!error)void finance.load();},
  async load(force=false){
    const db=auth();if(!db||loading||saving||(initialized&&!force))return;
@@ -204,7 +268,8 @@ const finance={
      "Não foi possível atualizar a conferência do Pix. Tente novamente."};}
    finally{saving=false;signal();}
  },
- summary,ledgerFor,
+ summary,ledgerFor,monthClosing,closingCsv,
+ setClosingMonth(month){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)||month>realToday().slice(0,7))return;closingMonth=month;signal();},
  render({head,I,esc}){
    captureDraft();capturePixDraft();
    let out=head("finance",'<button class="btn primary" data-action="real-finance-new">'+I("plus")+' Registrar pagamento</button> <button class="btn soft" data-action="real-pix-jump">Conferir Pix</button>');
