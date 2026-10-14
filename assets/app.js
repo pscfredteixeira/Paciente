@@ -111,7 +111,7 @@ function secureLoginScreen() {
     </div></section></div>`;
 }
 function loginScreen(){return `<div class="login-screen"><section class="login-feature"><div class="brand"><span class="brand-mark">${I('layers')}</span><div><div class="brand-title">Meu Consultório</div><div class="brand-caption">Gestão particular</div></div></div><div><div class="login-quote">Um espaço reservado para cuidar da sua rotina.</div><p>Consultas, pacientes e finanças reunidos em uma experiência simples e privativa.</p></div><small style="color:#a7c3b8">Protótipo de identidade visual · não autentica contas</small></section><section class="login-form"><div class="login-box"><span class="login-lock">${I('lock')}</span><h1>Bem-vindo de volta.</h1><p>Esta tela demonstra o futuro acesso exclusivo à sua conta.</p><label class="field">Seu e-mail<input type="email" placeholder="seu@email.com" disabled></label><label class="field">Sua senha<input type="password" placeholder="••••••••" disabled></label><button class="btn primary" data-action="exit-login">Explorar a demonstração ${I('arrow')}</button><p style="font-size:11px;margin-top:21px">Na versão real, haverá autenticação segura. Os campos estão desativados neste protótipo.</p></div></section></div>`}
-function render(){document.title='Meu Consultório — Sprint 12';document.getElementById('app').innerHTML=window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized'?secureLoginScreen():lockPreview?loginScreen():shell(({home:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioFinance.renderHome({head,I,esc}):renderHome),agenda:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioRealAgenda.render({head,I,esc}):renderAgenda),patients:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioPatientsUI.render({head,I,esc,money,query}):renderPatients),finance:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioFinance.render({head,I,esc}):renderFinance),reports:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioFinance.renderReports({head,I,esc}):renderReports),settings:renderSettings})[view]());}
+function render(){document.title='Meu Consultório — Sessões manuais';document.getElementById('app').innerHTML=window.ConsultorioAuth?.enabled && window.ConsultorioAuth.state.phase!=='authorized'?secureLoginScreen():lockPreview?loginScreen():shell(({home:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioFinance.renderHome({head,I,esc}):renderHome),agenda:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioRealAgenda.render({head,I,esc}):renderAgenda),patients:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioPatientsUI.render({head,I,esc,money,query}):renderPatients),finance:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioFinance.render({head,I,esc}):renderFinance),reports:(window.ConsultorioAuth?.enabled?()=>window.ConsultorioFinance.renderReports({head,I,esc}):renderReports),settings:renderSettings})[view]());}
 function updateAppointment(status,charge=false){const a=appointments.find(x=>x.id===modal.id);if(!a||!a.patientId)return;if(a.chargeId)ledger=ledger.filter(x=>x.id!==a.chargeId);a.chargeId=null;a.status=status;if(charge){a.chargeId='new'+sequence++;ledger.push({id:a.chargeId,date:a.date,patientId:a.patientId,type:'charge',amount:byPatient(a.patientId).price,description:status==='missed'?'Falta cobrada · '+fmtDate(a.date):'Sessão · '+fmtDate(a.date)});}modal=null;render();showToast(status==='done'?'Sessão confirmada. Débito simulado registrado.':status==='scheduled'?'Sessão reaberta e lançamento simulado revertido.':status==='missed'?'Falta registrada na demonstração.':'Cancelamento registrado na demonstração.');}
 window.addEventListener('click',e=>{
  const target=e.target.closest('button,[data-close]');if(!target)return;
@@ -127,6 +127,21 @@ window.addEventListener('click',e=>{
   if(action==='calendar-load')void calendar.load();
   if(action==='calendar-disconnect'&&window.confirm('Desconectar o Google Calendar deste aplicativo?'))void calendar.disconnect();
   return;
+ }
+ if(window.ConsultorioAuth?.enabled && target.dataset.action?.startsWith('real-manual-')){
+   const act=target.dataset.action;
+   const manual=window.ConsultorioManualSessions;
+   if(act==='real-manual-begin'){
+     manual?.begin(target.dataset.patientId||null);
+     if(view!=='patients')openView('patients');else render();
+     document.getElementById('real-manual-form')?.scrollIntoView({behavior:'smooth',block:'start'});
+   }else if(act==='real-manual-correct'){
+     const entry=window.ConsultorioSessions?.state.history.find(x=>x.google_event_id===target.dataset.eventId);
+     if(!entry){showToast('Atualize o histórico do paciente antes de corrigir.');return;}
+     manual?.correct(entry);render();
+     document.getElementById('real-manual-form')?.scrollIntoView({behavior:'smooth',block:'start'});
+   }else if(act==='real-manual-cancel'){manual?.cancel();render();}
+   return;
  }
  if(window.ConsultorioAuth?.enabled && target.dataset.action?.startsWith('real-statement-')){
    void window.ConsultorioStatement?.click(target,render,showToast);return;
@@ -188,6 +203,9 @@ window.addEventListener('input',e=>{if(e.target.id==='patient-search'){query=e.t
 window.addEventListener('change',e=>{
  if(window.ConsultorioAuth?.state.phase!=='authorized')return;
  const t=e.target;
+ if(view==='patients'&&['real-manual-patient','real-manual-status'].includes(t?.id)){
+   window.ConsultorioManualSessions?.capture();render();return;
+ }
  if(view==='reports'&&t?.dataset?.financeMonth){
    window.ConsultorioFinance?.setClosingMonth(t.value);return;
  }
@@ -198,6 +216,7 @@ window.addEventListener('change',e=>{
 });
 window.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal){modal=null;render()}});
 window.addEventListener('submit',e=>{
+ if(e.target?.id==='real-manual-form'){void window.ConsultorioManualSessions?.submit(e,render,showToast);return;}
  if(e.target?.id==='real-finance-form'){void window.ConsultorioFinance?.submit(e,render,showToast);return;}
  if(e.target?.id==='real-patient-form'){void window.ConsultorioPatientsUI?.handleSubmit(e,render,showToast);return;}
  if(e.target?.id!=='secure-login-form')return;
@@ -209,7 +228,7 @@ window.addEventListener('submit',e=>{
 });
 window.ConsultorioAuth?.subscribe(()=>{
  if(window.ConsultorioAuth.state.phase==='authorized'){window.ConsultorioPatients?.load();window.ConsultorioFinance?.ensure();if(!window.ConsultorioCalendar?.state.loaded)window.ConsultorioCalendar?.status();}
- else {window.ConsultorioPatients?.clear();window.ConsultorioPatientsUI?.reset();window.ConsultorioCalendar?.clear();window.ConsultorioRealAgenda?.reset();window.ConsultorioSessions?.clear();window.ConsultorioFinance?.clear();window.ConsultorioStatement?.clear();}
+ else {window.ConsultorioPatients?.clear();window.ConsultorioPatientsUI?.reset();window.ConsultorioCalendar?.clear();window.ConsultorioRealAgenda?.reset();window.ConsultorioSessions?.clear();window.ConsultorioFinance?.clear();window.ConsultorioStatement?.clear();window.ConsultorioManualSessions?.reset();}
  render();
 });
 window.ConsultorioPatients?.subscribe(()=>{
@@ -226,6 +245,9 @@ window.ConsultorioFinance?.subscribe(()=>{
 });
 window.ConsultorioStatement?.subscribe(()=>{
  if(view==='finance'&&window.ConsultorioAuth?.state.phase==='authorized')render();
+});
+window.ConsultorioManualSessions?.subscribe(()=>{
+ if(view==='patients'&&window.ConsultorioAuth?.state.phase==='authorized')render();
 });
 let calendarWasConnected=false;
 window.ConsultorioCalendar?.subscribe(()=>{
