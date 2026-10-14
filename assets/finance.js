@@ -55,7 +55,7 @@ const ledgerFor=id=>{
      amount_cents:p.amount_cents,label:"Pagamento · "+p.method,
      note:p.note||"",voided:!!p.voided_at,voided_at:p.voided_at});
  }
- entries.sort((a,b)=>a.at.localeCompare(b.at)||a.id.localeCompare(b.id));
+ entries.sort((a,b)=>a.day.localeCompare(b.day)||((a.type==="debit"?0:1)-(b.type==="debit"?0:1))||a.at.localeCompare(b.at)||String(a.id).localeCompare(String(b.id)));
  let running=0;
  for(const item of entries){
    if(!item.voided)running+=item.type==="debit"?item.amount_cents:-item.amount_cents;
