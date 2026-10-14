@@ -48,7 +48,7 @@ const ledgerFor=id=>{
  const entries=[];
  for(const s of sessions.filter(x=>x.patient_id===id&&x.charge_cents>0)){
    entries.push({type:"debit",id:s.id,day:brazilDate(s.scheduled_at),
-     at:s.scheduled_at,amount_cents:s.charge_cents,label:"Sessão · "+(statuses[s.status]||"Atendimento"),voided:false});
+     at:s.scheduled_at,amount_cents:s.charge_cents,label:(s.google_event_id?.startsWith("manual:")?"Sessão manual":"Sessão")+" · "+(statuses[s.status]||"Atendimento"),voided:false});
  }
  for(const p of payments.filter(x=>x.patient_id===id)){
    entries.push({type:"payment",id:p.id,day:p.paid_on,at:p.paid_on+"T12:00:00",
@@ -89,7 +89,7 @@ const monthRows=month=>{
    const day=brazilDate(s.scheduled_at);
    if(day.slice(0,7)!==month)continue;
    records.push({day,type:"Sessão",name:getPatient(s.patient_id)?.full_name||"Paciente indisponível",
-     status:statuses[s.status]||s.status,
+     status:(statuses[s.status]||s.status)+(s.google_event_id?.startsWith("manual:")?" · Manual":""),
      amount:Number(s.charge_cents||0),method:"",pix:""});
  }
  for(const p of payments){
@@ -178,7 +178,7 @@ const finance={
    const seq=++revision;loading=true;error="";signal();
    try{
      const [nextSessions,nextPayments,nextAudit]=await Promise.all([
-       pagination(db,"session_records","id,patient_id,scheduled_at,status,charge_cents","scheduled_at"),
+       pagination(db,"session_records","id,google_event_id,patient_id,scheduled_at,status,charge_cents","scheduled_at"),
        pagination(db,"patient_payments","id,patient_id,request_id,amount_cents,paid_on,method,note,voided_at,created_at,pix_verified_at,pix_reference","paid_on"),
        pagination(db,"payment_audit","id,payment_id,action,amount_cents,occurred_at","occurred_at")
      ]);
@@ -330,7 +330,7 @@ const finance={
    }
    out+='</section>';
    const movements=[];
-   for(const s of sessions.filter(s=>s.charge_cents>0))movements.push({id:s.id,date:s.scheduled_at,day:brazilDate(s.scheduled_at),type:"debit",amount:s.charge_cents,patient_id:s.patient_id,description:"Sessão cobrada"});
+   for(const s of sessions.filter(s=>s.charge_cents>0))movements.push({id:s.id,date:s.scheduled_at,day:brazilDate(s.scheduled_at),type:"debit",amount:s.charge_cents,patient_id:s.patient_id,description:s.google_event_id?.startsWith("manual:")?"Sessão manual cobrada":"Sessão cobrada"});
    for(const p of payments)movements.push({id:p.id,date:p.paid_on+"T12:00:00",type:"payment",amount:p.amount_cents,patient_id:p.patient_id,description:p.method,voided:!!p.voided_at});
    movements.sort((a,b)=>b.date.localeCompare(a.date));
    out+='<section class="card hcard real-finance-movements"><div class="card-head"><h2>Movimentações recentes</h2><span class="muted">Débitos e recebimentos</span></div>';
