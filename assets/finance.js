@@ -342,7 +342,29 @@ const finance={
  },
  async click(button,render,toast,navigate){
    const act=button.dataset.action||"";
-   if(!act.startsWith("real-finance-"))return false;
+   if(!act.startsWith("real-finance-")&&!act.startsWith("real-pix-")&&!act.startsWith("real-report-"))return false;
+   if(act==="real-report-period"){reportMonths=button.dataset.reportMonths==="12"?12:6;render();return true;}
+   if(act==="real-pix-open"){
+     const item=payments.find(p=>p.id===button.dataset.paymentId&&!p.voided_at&&p.method==="Pix");
+     if(!item){toast("Pagamento Pix indisponível.");return true;}
+     editingPixId=editingPixId===item.id?null:item.id;pixRefDraft="";render();return true;
+   }
+   if(act==="real-pix-cancel"){editingPixId=null;pixRefDraft="";render();return true;}
+   if(act==="real-pix-verify"){
+     const item=payments.find(p=>p.id===button.dataset.paymentId&&p.method==="Pix");
+     if(!item){toast("Pagamento Pix indisponível.");return true;}
+     const ref=document.getElementById("real-pix-reference")?.value??pixRefDraft;
+     if(!window.confirm("Você conferiu no EXTRATO DO BANCO o Pix de "+brl(item.amount_cents)+" de "+(getPatient(item.patient_id)?.full_name||"paciente")+"?\n\nConfirme somente se identificou o crédito real. Este botão não consulta o banco."))return true;
+     const outcome=await finance.verifyPix(item.id,true,ref);toast(outcome.message);
+     if(outcome.ok)await finance.reload();return true;
+   }
+   if(act==="real-pix-undo"){
+     const item=payments.find(p=>p.id===button.dataset.paymentId);
+     if(!item){toast("Pagamento não encontrado.");return true;}
+     if(!window.confirm("Desfazer a conferência manual deste Pix? O recebimento e o saldo continuarão registrados; apenas a marcação de conferido será removida."))return true;
+     const outcome=await finance.verifyPix(item.id,false,null);toast(outcome.message);
+     if(outcome.ok)await finance.reload();return true;
+   }
    if(act==="real-finance-new"){finance.begin();render();}
    else if(act==="real-finance-patient-open"){
       finance.begin(button.dataset.patientId);navigate("finance");
