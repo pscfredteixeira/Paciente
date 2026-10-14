@@ -344,7 +344,7 @@ const finance={
    for(const p of filtered){
       const b=patientPosition(p.id);
       out+='<div class="real-finance-patient"><div class="real-finance-patient-info"><strong>'+esc(p.full_name)+'</strong>'
-       +'<small>'+b.chargedSessions+' sessão'+(b.chargedSessions===1?'':'ões')+' cobrada'+(b.chargedSessions===1?'':'s')+
+       +'<small>'+b.chargedSessions+' '+(b.chargedSessions===1?'sessão cobrada':'sessões cobradas')+
          ' · Débitos '+brl(b.charges)+' · Recebidos '+brl(b.received)+'</small>'
        +(b.lastCharged?'<small>Última sessão cobrada: '+esc(b.lastCharged.split("-").reverse().join("/"))+'</small>':'')+'</div>'
        +'<div class="real-finance-patient-balance"><small>'+b.label+'</small><strong>'+brl(b.amount)+'</strong></div>'
