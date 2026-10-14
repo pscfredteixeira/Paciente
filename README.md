@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 8
+# Meu Consultório — Sprint 9
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -14,13 +14,15 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
-**Financeiro:** lançamentos reais de pagamentos, incluindo **Pix manual, dinheiro, transferência e cartão**; pagamentos antecipados viram créditos. A aba mostra recebimentos mensais, débitos pendentes, créditos antecipados e movimentações. Estornos são auditados.
+**Financeiro:** lançamentos reais de pagamentos, incluindo **Pix manual, dinheiro, transferência e cartão**; pagamentos antecipados viram créditos. A aba mostra recebimentos mensais, débitos pendentes, créditos antecipados e movimentações. **Conferência manual de Pix**: após verificar o crédito no banco por conta própria, marque-o como conferido, com identificador opcional e histórico de alterações. Estornos são auditados.
 
 **Início:** indicadores reais de pacientes, sessões, débitos pendentes e recebimentos.
 
-## Partes que ainda são demonstração
+**Relatórios reais:** gráfico e tabela dos últimos 6/12 meses com recebimentos, débitos, sessões realizadas e faltas. Posição atual de pendências e créditos por paciente. Sem números fictícios quando autenticado.
 
-**Relatórios:** continuam mostrando dados ilustrativos. Pix automático, leitura de extrato bancário e conciliação com instituições financeiras ainda não foram implementados.
+## Partes que ainda não estão implementadas
+
+**Conciliação bancária automática:** a marcação de Pix é **manual**; não há leitura de extratos, acesso a banco, identificação automática de recebimentos ou integração com instituições financeiras.
 
 ## Código modular
 
@@ -46,6 +48,7 @@ supabase/migrations/
   20261012001500_sprint_07_sessions_debits_and_audit.sql
   20261014_sprint_07_1_patient_birth_cpf_email.sql
   20261014_sprint_08_payments_private_ledger.sql
+  20261014_sprint_09_manual_pix_verification.sql
 docs/
   ARQUITETURA.md
   SPRINT_04_ACESSO.md
@@ -55,6 +58,7 @@ docs/
   SPRINT_07_SESSOES.md
   SPRINT_07_1_DADOS_PESSOAIS.md
   SPRINT_08_FINANCEIRO.md
+  SPRINT_09_RELATORIOS_PIX.md
 ```
 
 ## Segurança
@@ -65,8 +69,8 @@ Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled
 
 [Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md) · [Sessões e débitos reais](./docs/SPRINT_07_SESSOES.md).
 
-[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md).
+[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md).
 
 ## Próxima etapa
 
-Validar o primeiro pagamento real em navegador. Sprint 9: relatórios reais e possível conciliação Pix, após definir integração bancária.
+Validar os relatórios reais e a conferência manual Pix em um lançamento existente. Depois avaliar, com o usuário, o banco e o formato de extrato para uma eventual conciliação bancária assistida.
