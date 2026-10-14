@@ -1,4 +1,4 @@
-# Meu Consultório — Sprint 12.1
+# Meu Consultório — Sprint 13
 
 Aplicativo pessoal do consultório, com **login privado Supabase** e interface responsiva para iPhone e computador.
 
@@ -10,15 +10,15 @@ Aplicativo pessoal do consultório, com **login privado Supabase** e interface r
 
 **Agenda:** compromissos reais do Google Calendar e vínculos semanais automáticos. Após vincular, você deve **confirmar que a sessão aconteceu** para criar cobrança: o botão **Confirmar realizada e cobrar** gera um único débito com honorários congelados, depois de sua confirmação. Pode registrar faltas cobradas/isentas ou cancelamentos, corrigir registros e ir para o Financeiro. **Vincular sozinho não gera cobrança**; o Google Calendar continua somente leitura.
 
-**Pacientes — histórico real:** cadastro mostra atendimentos, débitos, correções, **saldo, crédito disponível e extrato**. Agora permite **registrar sessão manual**, mesmo sem Google Calendar, e corrigir seus lançamentos pelo histórico. Possibilidade de registrar pagamentos diretamente pelo perfil.
+**Pacientes — histórico real:** cadastro mostra atendimentos, débitos, correções, **saldo, crédito disponível, quantidade de sessões cobradas e extrato**. O saldo aparece também na listagem. Permite **registrar sessão manual**, mesmo sem Google Calendar, corrigir pelo histórico e registrar pagamentos separadamente.
 
 **Sessões manuais:** via Pacientes ou botão na Agenda, escolha o paciente, data, hora e situação. Sessão realizada/falta cobrada gera débito real na mesma RPC transacional da Agenda. Não cria evento Google; débito só após confirmação e honorário é congelado. Permite corrigir situação e desfazer registro.
 
 **Ajustes:** conectar, desconectar e consultar eventos do Google Calendar.
 
-**Financeiro:** lançamentos reais de pagamentos, incluindo **Pix manual, dinheiro, transferência e cartão**; pagamentos antecipados viram créditos. A aba mostra recebimentos mensais, débitos pendentes, créditos antecipados e movimentações. **Conferência manual de Pix**: seção compacta e expansível (inclusive no iPhone); após verificar o crédito no banco por conta própria, marque-o como conferido, com identificador opcional e histórico de alterações. Estornos são auditados.
+**Financeiro:** lançamentos reais de pagamentos, incluindo **Pix manual, dinheiro, transferência e cartão**; pagamentos antecipados viram créditos. A aba mostra recebimentos mensais, débitos pendentes, créditos antecipados e movimentações. **Central por paciente**: sessões cobradas (inclusive manuais), última sessão cobrada, saldos, filtros e botão Ver ficha, que abre diretamente o paciente. **Conferência manual de Pix**: seção compacta e expansível (inclusive no iPhone); após verificar o crédito no banco por conta própria, marque-o como conferido, com identificador opcional e histórico de alterações. Estornos são auditados.
 
-**Início:** indicadores reais de pacientes, sessões, débitos pendentes e recebimentos.
+**Início:** indicadores reais de pacientes, sessões, débitos pendentes e recebimentos, com lista de até cinco pacientes com maiores saldos pendentes e atalho para abrir a ficha.
 
 **Relatórios reais:** gráfico e tabela dos últimos 6/12 meses com recebimentos, débitos, sessões realizadas e faltas; posição atual de pendências/créditos. **Fechamento mensal (prévia)** por mês com exportação CSV privada para Excel. Sem números fictícios quando autenticado.
 
@@ -68,6 +68,7 @@ docs/
   SPRINT_11_OFX.md
   SPRINT_12_FECHAMENTO_E_CORRECAO.md
   SPRINT_12_1_SESSOES_MANUAIS.md
+  SPRINT_13_COBRANCAS_POR_PACIENTE.md
 ```
 
 ## Segurança
@@ -78,8 +79,8 @@ Ainda existe o aviso de segurança Supabase [Leaked Password Protection Disabled
 
 [Agenda real](./docs/SPRINT_06_2_AGENDA.md) · [Vínculos recorrentes](./docs/SPRINT_06_3_SERIES.md) · [Sessões e débitos reais](./docs/SPRINT_07_SESSOES.md).
 
-[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md) · [Leitura OFX local](./docs/SPRINT_11_OFX.md) · [Fechamento mensal e correção de cobranças](./docs/SPRINT_12_FECHAMENTO_E_CORRECAO.md) · [Sessões fora do Google Calendar](./docs/SPRINT_12_1_SESSOES_MANUAIS.md).
+[Dados pessoais opcionais e privacidade](./docs/SPRINT_07_1_DADOS_PESSOAIS.md) · [Financeiro Real](./docs/SPRINT_08_FINANCEIRO.md) · [Relatórios e Pix manual](./docs/SPRINT_09_RELATORIOS_PIX.md) · [Conferência assistida por CSV](./docs/SPRINT_10_CSV_PIX.md) · [Leitura OFX local](./docs/SPRINT_11_OFX.md) · [Fechamento mensal e correção de cobranças](./docs/SPRINT_12_FECHAMENTO_E_CORRECAO.md) · [Sessões fora do Google Calendar](./docs/SPRINT_12_1_SESSOES_MANUAIS.md) · [Central de cobranças por paciente](./docs/SPRINT_13_COBRANCAS_POR_PACIENTE.md).
 
 ## Próxima etapa
 
-Validar sessão manual em Pacientes, cobrando uma única vez e refletindo o valor no Financeiro. Validar correção de situação/desfazer no histórico. Conferir também o fluxo da Agenda e a exportação mensal.
+Validar no iPhone a central Financeiro → Ver ficha do paciente e a lista de pendências no Início, conferindo saldos com as sessões manuais reais já registradas. Nenhum novo lançamento foi criado neste sprint.
