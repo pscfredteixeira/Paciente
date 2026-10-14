@@ -81,7 +81,14 @@ const store={
      if(error)throw error;
      if(!data?.session_id)throw Error("Resposta sem registro");
      const {data:rows,error:readIssue}=await db.from("session_records").select(fields).eq("id",data.session_id).limit(1);
-     if(readIssue||!rows?.[0])throw readIssue||Error("Registro salvo, mas não foi possível reler.");
+     if(readIssue||!rows?.[0]){
+       // A RPC já confirmou e COMITOU o atendimento. Não dizer "erro ao salvar":
+       // o usuário poderia cadastrar nova sessão e cobrar duas vezes.
+       records.delete(event.id);
+       if(historyPatientId===patientId)historyPatientId=null;
+       return {ok:true,unchanged:!!data.unchanged,pendingSync:true,
+         message:"Sessão salva no Supabase. A atualização do histórico falhou; recarregue o cadastro antes de registrar novamente."};
+     }
      records.set(event.id,rows[0]);
      if(historyPatientId===patientId){
        // Recarrega após soltar o indicador de salvamento.
