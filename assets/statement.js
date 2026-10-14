@@ -249,7 +249,8 @@ const stmt={
    if(format==="OFX"){
      out+='<div class="real-statement-ofx-info"><strong>Arquivo OFX reconhecido: colunas identificadas automaticamente.</strong>'
        +'<p>'+importInfo.eligible+' entradas positivas · '+importInfo.outgoing+' saídas ignoradas'
-       +(importInfo.invalid?' · '+importInfo.invalid+' linhas incompletas ignoradas':'')+'</p>'
+       +(importInfo.invalid?' · '+importInfo.invalid+' linhas incompletas ignoradas':'')
+       +(importInfo.duplicates?' · '+importInfo.duplicates+' repetições ignoradas':'')+'</p>'
        +(importInfo.warning?'<p>'+esc(importInfo.warning)+'</p>':'')
        +'<p>Se seu banco não escreve Pix na descrição, ative a opção para incluir outros créditos positivos e revise cada sugestão.</p>'
        +'</div>';
