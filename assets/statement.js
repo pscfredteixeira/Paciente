@@ -37,7 +37,10 @@ const moneyCents=value=>{
    if(s.lastIndexOf(",")>s.lastIndexOf(".")){s=s.replace(/\./g,"");decimal=",";}
    else{s=s.replace(/,/g,"");decimal=".";}
  }else if(s.includes(",")){decimal=",";}
- else if(s.includes(".")){decimal=/^\d{1,3}(?:\.\d{3})+$/.test(s)?"":".";}
+ else if(s.includes(".")){
+   if(/^\d{1,3}(?:\.\d{3})+$/.test(s)){s=s.replace(/\./g,"");decimal="";}
+   else decimal=".";
+ }
  if(decimal){
    const pieces=s.split(decimal);
    if(pieces.length!==2||!pieces[0]||!pieces[1]||pieces[1].length>2||
@@ -95,9 +98,9 @@ const suggestMapping=()=>{
    if(idx===-1)return -1;used.add(idx);return idx;
  };
  mapping={
-   date:guess("date",/^(data|date|data lancamento|data da transacao|dt|data movimentacao|data de pagamento|data hora)$/),
-   amount:guess("amount",/^(valor|amount|valor r|quantia|valor da transacao|valor recebido|valor liquido|credito|entrada|valor da movimentacao)$/),
-   description:guess("description",/^(descricao|historico|detalhes|titulo|descricao da transacao|lancamento|descricao da movimentacao|observacao|transaction|identificacao)$/),
+   date:guess("date",/^(data|date|data lancamento|data da transacao|dt|data movimentacao|data de pagamento|data hora|data e hora|data da movimentacao|data da operacao)$/),
+   amount:guess("amount",/^(valor|amount|valor r|quantia|valor da transacao|valor recebido|valor liquido|credito|entrada|valor da movimentacao|valor da operacao|valor credito)$/),
+   description:guess("description",/^(descricao|historico|detalhes|detalhamento|detalhe|titulo|descricao da transacao|lancamento|descricao da movimentacao|observacao|transaction|identificacao|transacao)$/),
    type:guess("type",/^(tipo|natureza|categoria|operacao|credito debito|entrada saida|tipo de operacao)$/),
    reference:guess("reference",/^(id|identificador|endtoendid|end to end|id transacao|id da transacao|referencia|codigo transacao|transaction id)$/)
  };
