@@ -294,6 +294,94 @@ const finance={
    if(allPix.length>200)out+='<p class="real-session-muted">Exibindo os 200 Pix mais recentes; os anteriores continuam preservados no banco.</p>';
    return out+'</section><p class="foot-note">Os valores são calculados a partir dos registros reais. Créditos são considerados automaticamente no saldo, sem alterar as sessões. Conferência Pix é exclusivamente manual.</p>';
  },
+ renderReports({head,I,esc}){
+   let out=head("reports",'<button class="btn soft" data-action="real-finance-refresh">'+I("clock")+' Atualizar dados</button>');
+   out+='<div class="notice"><span class="icon">'+I("shield")+'</span><div><strong>Relatórios reais</strong>'
+      +'<p>Dados registrados no Supabase. Recebimentos são agrupados pela data do pagamento; sessões, pela data do atendimento. Um Pix registrado não significa conferido no banco.</p></div></div>';
+   if(loading&&!initialized)return out+'<section class="card hcard"><div class="empty">Carregando histórico real...</div></section>';
+   if(error)return out+'<section class="card hcard"><p role="alert">'+esc(error)+'</p><button class="btn" data-action="real-finance-refresh">Tentar novamente</button></section>';
+   const current=realToday().slice(0,7);
+   const [year,month]=current.split("-").map(Number);
+   const months=[];
+   for(let step=reportMonths-1;step>=0;step--){
+     const dt=new Date(Date.UTC(year,month-1-step,15,12));
+     const key=dt.toISOString().slice(0,7);
+     months.push({key,label:new Intl.DateTimeFormat("pt-BR",{month:"short",year:"2-digit",timeZone:"UTC"}).format(dt),
+       charged:0,received:0,done:0,missedCharge:0,missedNocharge:0,verifiedPix:0,pixCount:0});
+   }
+   const keys=new Map(months.map(m=>[m.key,m]));
+   for(const row of sessions){
+     const m=keys.get(brazilDate(row.scheduled_at).slice(0,7));
+     if(!m)continue;
+     m.charged+=Number(row.charge_cents||0);
+     if(row.status==="done")m.done++;
+     if(row.status==="missed_charge")m.missedCharge++;
+     if(row.status==="missed_nocharge")m.missedNocharge++;
+   }
+   for(const payment of payments){
+     if(payment.voided_at)continue;
+     const m=keys.get(payment.paid_on.slice(0,7));
+     if(!m)continue;
+     m.received+=Number(payment.amount_cents||0);
+     if(payment.method==="Pix"){
+       m.pixCount++;
+       if(payment.pix_verified_at)m.verifiedPix++;
+     }
+   }
+   const sums=months.reduce((a,m)=>({
+     charged:a.charged+m.charged,received:a.received+m.received,done:a.done+m.done,
+     missedCharge:a.missedCharge+m.missedCharge,missedNocharge:a.missedNocharge+m.missedNocharge,
+     pixCount:a.pixCount+m.pixCount,verifiedPix:a.verifiedPix+m.verifiedPix
+   }),{charged:0,received:0,done:0,missedCharge:0,missedNocharge:0,pixCount:0,verifiedPix:0});
+   out+='<section class="card hcard real-report-panel"><div class="card-head"><h2>Evolução financeira</h2></div>'
+     +'<div class="chip-bar real-finance-chips" role="group" aria-label="Período do relatório">'
+     +[['6','Últimos 6 meses'],['12','Últimos 12 meses']].map(([n,label])=>
+       '<button class="chip '+(reportMonths===Number(n)?'active':'')+'" data-action="real-report-period" data-report-months="'+n+'">'+label+'</button>').join('')
+     +'</div><div class="real-finance-metrics">'
+     +[['Recebimentos no período',brl(sums.received)],
+       ['Débitos no período',brl(sums.charged)],
+       ['Sessões realizadas',sums.done],
+       ['Faltas cobradas',sums.missedCharge]]
+       .map(([label,value])=>'<div class="real-finance-metric"><small>'+esc(label)+'</small><strong>'+value+'</strong></div>').join('')
+     +'</div><p class="real-session-muted">Faltas sem cobrança: '+sums.missedNocharge
+       +' · Pix conferidos manualmente: '+sums.verifiedPix+' de '+sums.pixCount
+       +' (no período selecionado).</p>';
+   const max=Math.max(1,...months.map(m=>Math.max(m.charged,m.received)));
+   if(months.every(m=>m.charged===0&&m.received===0)){
+     out+='<div class="empty">Nenhum débito ou recebimento registrado neste período. Os gráficos não apresentam valores fictícios.</div>';
+   }else{
+     out+='<div class="real-report-legend"><span class="real-report-key is-received">Recebido</span><span class="real-report-key is-charged">Cobrado</span></div>'
+       +'<div class="real-report-chart" role="img" aria-label="Gráfico mensal de recebimentos e cobranças reais">'
+       +months.map(m=>'<div class="real-report-month"><div class="real-report-bars">'
+         +'<div class="real-report-bar is-received" style="height:'+(m.received?Math.max(2,100*m.received/max):0)+'%" title="'+esc(m.label)+' · Recebido: '+esc(brl(m.received))+'"></div>'
+         +'<div class="real-report-bar is-charged" style="height:'+(m.charged?Math.max(2,100*m.charged/max):0)+'%" title="'+esc(m.label)+' · Cobrado: '+esc(brl(m.charged))+'"></div>'
+         +'</div><span>'+esc(m.label)+'</span></div>').join('')
+       +'</div>';
+   }
+   out+='<div class="real-report-table-wrap"><table class="real-report-table"><thead><tr>'
+     +'<th scope="col">Mês</th><th scope="col">Recebido</th><th scope="col">Cobrado</th><th scope="col">Realizadas</th>'
+     +'</tr></thead><tbody>'+months.slice().reverse().map(m=>
+       '<tr><th scope="row">'+esc(m.label)+'</th><td>'+brl(m.received)+'</td><td>'+brl(m.charged)+'</td><td>'+m.done+'</td></tr>'
+     ).join('')+'</tbody></table></div></section>';
+   const debts=patients().map(p=>({patient:p,...summary(p.id)}))
+      .filter(x=>x.pending>0).sort((a,b)=>b.pending-a.pending);
+   const credits=patients().map(p=>({patient:p,...summary(p.id)}))
+      .filter(x=>x.credit>0).sort((a,b)=>b.credit-a.credit);
+   out+='<section class="card hcard real-report-balances"><div class="card-head"><h2>Posição financeira atual</h2></div>'
+     +'<p class="real-session-muted">Esta posição considera todos os registros até agora, não somente o período do gráfico. Pagamentos adiantados são créditos, não valores pendentes.</p>'
+     +'<div class="real-finance-metrics real-finance-metrics-sm">'
+     +[['Total a receber',debts.reduce((a,x)=>a+x.pending,0)],
+       ['Créditos disponíveis',credits.reduce((a,x)=>a+x.credit,0)],
+       ['Recebido desde o início',payments.filter(p=>!p.voided_at).reduce((a,p)=>a+p.amount_cents,0)]]
+       .map(([label,n])=>'<div class="real-finance-metric"><small>'+esc(label)+'</small><strong>'+brl(n)+'</strong></div>').join('')
+     +'</div><div class="real-report-columns">'
+     +'<div><h3>Pacientes com valores pendentes</h3>'
+     +(debts.length?debts.map(x=>'<div class="real-report-balance-row"><span>'+esc(x.patient.full_name)+'</span><strong>'+brl(x.pending)+'</strong></div>').join(''):'<p class="real-session-muted">Nenhuma pendência registrada.</p>')
+     +'</div><div><h3>Pacientes com crédito</h3>'
+     +(credits.length?credits.map(x=>'<div class="real-report-balance-row"><span>'+esc(x.patient.full_name)+'</span><strong>'+brl(x.credit)+'</strong></div>').join(''):'<p class="real-session-muted">Nenhum crédito disponível.</p>')
+     +'</div></div></section>';
+   return out+'<p class="foot-note">Lançamentos estornados não integram os totais. Correções de sessões alteram retroativamente os débitos do mês da sessão. A conferência de Pix é manual; não há conexão bancária.</p>';
+ },
  renderHome({head,I,esc}){
    const sum=allSummary();
    let out=head("home",'<button class="btn soft" data-view="finance">'+I("wallet")+' Abrir financeiro</button>');
