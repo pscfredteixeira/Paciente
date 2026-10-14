@@ -379,3 +379,26 @@
  .real-month-close-alert .btn{width:100%;margin-left:0}
 }
 @media(max-width:350px){.real-month-close .real-finance-metrics-sm{grid-template-columns:1fr}}
+
+
+/* Sessões manuais: mesmo visual do cadastro e do histórico existente. */
+.real-manual-section{margin:15px 0 22px}
+.real-manual-section .card-head{gap:13px;align-items:flex-start;flex-wrap:wrap}
+.real-manual-section .card-head>div{flex:1 1 230px;min-width:0}
+.real-manual-section .card-head h2{line-height:1.35}
+.real-manual-section .card-head .status{white-space:nowrap}
+.real-manual-section .real-session-muted{font-size:12px;line-height:1.6;margin:7px 0 0;color:var(--ink-muted)}
+.real-manual-section form{margin-top:16px}
+.real-manual-section .field select,.real-manual-section .field input{min-width:0;max-width:100%;width:100%}
+.real-manual-section .field input[disabled],.real-manual-section .field select[disabled]{background:#f6f2f7;opacity:.8;color:var(--ink)}
+.real-manual-amount{background:#f3edf9;border:1px solid #e3d9ed;border-radius:10px;padding:13px 15px;color:var(--dark);font-size:13px;font-weight:800;line-height:1.5}
+.real-manual-history{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:8px 0}
+.real-manual-history .btn{padding:6px 12px;min-height:34px}
+.real-session-confirm{white-space:normal;line-height:1.4;text-align:left}
+@media(max-width:560px){
+ .real-manual-section{padding:16px;margin:12px 0 18px}
+ .real-manual-section .patient-form-actions{display:flex;flex-wrap:wrap;gap:10px}
+ .real-manual-section .patient-form-actions .btn{flex:1 1 180px;min-height:45px;white-space:normal}
+ .real-manual-section .field input,.real-manual-section .field select{font-size:16px}
+ .real-manual-history{gap:6px}
+}
