@@ -64,11 +64,24 @@ const ledgerFor=id=>{
  return entries;
 };
 const summary=id=>{
- const totalCharges=sessions.filter(s=>s.patient_id===id).reduce((a,s)=>a+Number(s.charge_cents||0),0);
- const received=payments.filter(p=>p.patient_id===id&&!p.voided_at)
-   .reduce((a,p)=>a+Number(p.amount_cents||0),0);
+ const charged=sessions.filter(s=>s.patient_id===id&&Number(s.charge_cents)>0);
+ const totalCharges=charged.reduce((a,s)=>a+Number(s.charge_cents||0),0);
+ const receivedRows=payments.filter(p=>p.patient_id===id&&!p.voided_at);
+ const received=receivedRows.reduce((a,p)=>a+Number(p.amount_cents||0),0);
  const net=totalCharges-received;
- return {charges:totalCharges,received,net,pending:Math.max(0,net),credit:Math.max(0,-net)};
+ const latestSession=charged.reduce((date,s)=>{
+   const local=brazilDate(s.scheduled_at);
+   return local>date?local:date;
+ },"");
+ return {charges:totalCharges,received,net,pending:Math.max(0,net),credit:Math.max(0,-net),
+   chargedSessions:charged.length,paymentCount:receivedRows.length,lastCharged:latestSession,
+   hasMovement:charged.length>0||receivedRows.length>0};
+};
+const patientPosition=id=>{
+ const b=summary(id);
+ return {...b,
+   label:b.pending?"A receber":b.credit?"Crédito disponível":b.hasMovement?"Em dia":"Sem movimentação",
+   amount:b.pending||b.credit};
 };
 const allSummary=()=>{
  const active=payments.filter(p=>!p.voided_at);
@@ -107,7 +120,8 @@ const monthClosing=month=>{
    validPayments=rows.filter(r=>r.type==="Pagamento"&&r.status==="Recebido");
  return {month,rows,charged:validCharges.reduce((t,r)=>t+r.amount,0),
    received:validPayments.reduce((t,r)=>t+r.amount,0),
-   sessions:validCharges.filter(r=>r.status==="Realizada").length,
+   // Sessões manuais recebem sufixo no rótulo; devem ser contabilizadas como realizadas.
+   sessions:validCharges.filter(r=>r.status==="Realizada"||r.status==="Realizada · Manual").length,
    pixPending:validPayments.filter(r=>r.method==="Pix"&&r.pix==="Não conferido").length,
    pixVerified:validPayments.filter(r=>r.method==="Pix"&&r.pix==="Conferido manualmente").length,
    voided:rows.filter(r=>r.type==="Pagamento"&&r.status==="Estornado").length};
@@ -283,7 +297,7 @@ const finance={
      "Não foi possível atualizar a conferência do Pix. Tente novamente."};}
    finally{saving=false;signal();}
  },
- summary,ledgerFor,monthClosing,closingCsv,
+ summary,patientPosition,ledgerFor,monthClosing,closingCsv,
  setClosingMonth(month){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)||month>realToday().slice(0,7))return;closingMonth=month;signal();},
  render({head,I,esc}){
    captureDraft();capturePixDraft();
