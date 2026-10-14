@@ -17,6 +17,13 @@
     const [year,month,day] = iso.split("-");
     return day + "/" + month + "/" + year;
   };
+  const todayISO = () => {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(new Date());
+    const result = Object.fromEntries(parts.map(({type,value}) => [type,value]));
+    return result.year + "-" + result.month + "-" + result.day;
+  };
   const ui = {
     reset() { chosen = null; editor = null; filter = "active"; },
     render(helpers) {
@@ -46,7 +53,7 @@
           + "<label class='field'>Valor por sessão (R$)<input id='real-patient-fee' type='text' inputmode='decimal' required placeholder='Ex.: 240,00' value='" + esc(fee) + "'></label>"
           + "<label class='field'>Frequência prevista<select id='real-patient-cadence'>" + options + "</select></label>"
           + "<div class='patient-wide patient-form-section-title'>Dados pessoais <small>(opcionais)</small></div>"
-          + "<label class='field'>Data de nascimento<input id='real-patient-birth-date' type='date' min='1900-01-01' max='" + new Date().toLocaleDateString("en-CA", {timeZone:"America/Sao_Paulo"}).replace(/^(\d{2})\/(\d{2})\/(\d{4})$/, "$3-$1-$2") + "' value='" + esc(birthDate) + "'></label>"
+          + "<label class='field'>Data de nascimento<input id='real-patient-birth-date' type='date' min='1900-01-01' max='" + todayISO() + "' value='" + esc(birthDate) + "'></label>"
           + "<label class='field'>CPF<input id='real-patient-cpf' type='text' inputmode='numeric' maxlength='14' placeholder='000.000.000-00' autocomplete='off' value='" + esc(cpf) + "'></label>"
           + "<label class='field patient-wide'>E-mail<input id='real-patient-email' type='email' maxlength='254' inputmode='email' autocomplete='off' autocapitalize='off' spellcheck='false' placeholder='paciente@exemplo.com' value='" + esc(email) + "'></label>"
           + "<div class='patient-form-actions patient-wide'><button class='btn' type='button' data-action='real-patient-cancel'>Cancelar</button>"
