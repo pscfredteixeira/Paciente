@@ -57,10 +57,11 @@
       const selected = state.rows.filter(x => (filter === "all" || (filter === "active" ? x.is_active : !x.is_active))
         && x.full_name.toLocaleLowerCase("pt-BR").includes(String(query || "").toLocaleLowerCase("pt-BR")));
       const nActive = state.rows.filter(x => x.is_active).length;
-      let output = head("patients", "<button class='btn primary' data-action='real-patient-new'>" + I("plus") + " Novo paciente</button>");
-      output += "<div class='notice'>" + I("shield") + "<div><strong>Cadastros privados</strong><p>Dados administrativos protegidos no Supabase. A Agenda usa compromissos reais; o Financeiro e os Relatórios gerais ainda são demonstrações.</p></div></div>";
+      let output = head("patients", "<button class='btn primary' data-action='real-patient-new'>" + I("plus") + " Novo paciente</button> <button class='btn soft' data-action='real-manual-begin'>" + I("calendar") + " Registrar sessão manual</button>");
+      output += "<div class='notice'>" + I("shield") + "<div><strong>Cadastros privados</strong><p>Dados administrativos protegidos no Supabase. As sessões podem ser lançadas pela Agenda ou manualmente; cobranças e relatórios são reais.</p></div></div>";
       if (state.loading && !state.initialized) return output + "<section class='card hcard'><div class='empty'>Carregando seus pacientes...</div></section>";
       if (state.error) return output + "<section class='card hcard'><div class='notice orange' role='alert'>" + I("info") + "<div>" + esc(state.error) + "</div></div><button class='btn' data-action='real-patient-reload'>Tentar novamente</button></section>";
+      output += window.ConsultorioManualSessions?.render({esc}) || "";
       if (editor === "new" || editing) {
         const activeDraft = draft?.editor === editor ? draft : null;
         const name = activeDraft ? activeDraft.full_name : (editing?.full_name || "");
@@ -96,6 +97,7 @@
           + "<div class='profile-stat patient-email-stat'><small>E-mail</small><strong>" + esc(row.email || "Não informado") + "</strong></div>"
           + "</div></div>"
           + "<div class='patient-form-actions'><button class='btn' data-action='real-patient-back'>Voltar</button>"
+          + "<button class='btn primary' data-action='real-manual-begin' data-patient-id='" + esc(row.id) + "'>Registrar sessão manual</button>"
           + "<button class='btn' data-action='real-patient-edit' data-id='" + esc(row.id) + "'>Editar</button>"
           + "<button class='btn " + (row.is_active ? "soft" : "primary") + "' data-action='real-patient-toggle' data-id='" + esc(row.id) + "'" + (state.busy ? " disabled" : "") + ">" + (row.is_active ? "Arquivar" : "Reativar") + "</button></div>"
           + "<div class='note-panel'>" + I("info") + "<span>As sessões e os pagamentos são registrados separadamente. O financeiro individual abaixo mostra débitos, pagamentos e créditos reais.</span></div></section>";
@@ -112,7 +114,7 @@
           output+="<div class='notice orange' role='alert'>"+I("info")+"<div>"+esc(sessionState.historyError)+"</div></div>"
             +"<button class='btn sm' data-action='real-patient-history-reload' data-id='"+esc(row.id)+"'>Tentar novamente</button>";
         }else if(!sessionState.history.length){
-          output+="<div class='empty'>Nenhuma sessão confirmada ainda. Vincule o compromisso ao paciente na Agenda e, depois do atendimento, clique em Confirmar realizada e cobrar para criar o débito.</div>";
+          output+="<div class='empty'>Nenhuma sessão registrada ainda. Você pode vincular um compromisso na Agenda ou usar Registrar sessão manual, mesmo sem evento no Google Calendar.</div>";
         }else{
           output+="<p class='real-patient-history-count'>Últimos "+sessionState.history.length+" atendimento"+(sessionState.history.length===1?"":"s")+
            " registrado"+(sessionState.history.length===1?"":"s")+".</p>";
@@ -121,6 +123,9 @@
             output+="<article class='real-patient-history-item'><div class='real-patient-history-head'>"
               +"<strong>"+esc(fmtDateTime(entry.scheduled_at))+"</strong>"
               +"<span class='status "+(entry.charge_cents>0?"done":"unlinked")+"'>"+esc(statuses[entry.status]||entry.status)+"</span></div>"
+              +(entry.google_event_id?.startsWith("manual:")?
+                "<div class='real-manual-history'><span class='status unlinked'>Sessão manual</span>"
+                  +" <button class='btn sm' data-action='real-manual-correct' data-event-id='"+esc(entry.google_event_id)+"'>Corrigir</button></div>":"")
               +"<p>Honorário da sessão: "+amount(entry.fee_snapshot_cents)
               +" · <strong>"+(entry.charge_cents>0?"Débito: "+amount(entry.charge_cents):"Sem débito")+"</strong></p>";
             if(changes.length>1){
