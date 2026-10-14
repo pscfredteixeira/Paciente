@@ -98,7 +98,7 @@
           + "<div class='patient-form-actions'><button class='btn' data-action='real-patient-back'>Voltar</button>"
           + "<button class='btn' data-action='real-patient-edit' data-id='" + esc(row.id) + "'>Editar</button>"
           + "<button class='btn " + (row.is_active ? "soft" : "primary") + "' data-action='real-patient-toggle' data-id='" + esc(row.id) + "'" + (state.busy ? " disabled" : "") + ">" + (row.is_active ? "Arquivar" : "Reativar") + "</button></div>"
-          + "<div class='note-panel'>" + I("info") + "<span>As sessões confirmadas na Agenda geram débitos reais. Pagamentos recebidos ainda não estão implementados.</span></div></section>";
+          + "<div class='note-panel'>" + I("info") + "<span>As sessões e os pagamentos são registrados separadamente. O financeiro individual abaixo mostra débitos, pagamentos e créditos reais.</span></div></section>";
         const sessionState=window.ConsultorioSessions?.state||{historyPatientId:null,history:[],audit:[],historyLoading:false,historyError:""};
         const statuses={done:"Realizada",missed_charge:"Falta cobrada",missed_nocharge:"Falta sem cobrança",cancelled:"Cancelada",voided:"Registro desfeito"};
         const amount=cents=>money(Number(cents||0)/100);
@@ -135,6 +135,7 @@
           }
         }
         output+="</section>";
+        output += window.ConsultorioFinance?.renderPatientSummary(row.id,{esc,I}) || "";
       }
       const n = selected.length;
       output += "<section class='card table-card'><div class='real-list-header'><strong>Seus cadastros</strong><span class='muted'>" + nActive + " ativo" + (nActive === 1 ? "" : "s") + "</span></div>"
