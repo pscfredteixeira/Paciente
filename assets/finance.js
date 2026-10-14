@@ -541,6 +541,28 @@ const finance={
  async click(button,render,toast,navigate){
    const act=button.dataset.action||"";
    if(!act.startsWith("real-finance-")&&!act.startsWith("real-pix-")&&!act.startsWith("real-report-"))return false;
+   if(act==="real-report-export-month"){
+     if(!auth()||loading||error||!initialized){
+       toast("Atualize o financeiro antes de exportar.");return true;
+     }
+     const month=closingMonth||realToday().slice(0,7);
+     const count=monthClosing(month).rows.length;
+     if(!window.confirm("Exportar "+count+" movimentação"+(count===1?"":"ões")+
+       " de "+month+" em CSV para Excel?\n\nO arquivo contém nomes de pacientes e deve ser guardado em local privado. Ele não é um fechamento fiscal ou contábil."))return true;
+     try{
+       const content=closingCsv(month);
+       const blob=new Blob([content],{type:"text/csv;charset=utf-8"});
+       const url=URL.createObjectURL(blob);
+       const link=document.createElement("a");
+       link.href=url;link.download="meu-consultorio-financeiro-"+month+".csv";
+       link.style.display="none";
+       document.body.appendChild(link);
+       link.click();link.remove();
+       setTimeout(()=>URL.revokeObjectURL(url),60000);
+       toast("Arquivo CSV gerado no aparelho. Guarde em local privado.");
+     }catch(_){toast("Não foi possível gerar o CSV neste navegador. Tente novamente.");}
+     return true;
+   }
    if(act==="real-report-period"){reportMonths=button.dataset.reportMonths==="12"?12:6;render();return true;}
    if(act==="real-pix-jump"){
      pixExpanded=true;
