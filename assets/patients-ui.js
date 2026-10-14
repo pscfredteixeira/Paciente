@@ -13,7 +13,7 @@
   const captureDraft = () => {
     if (!editor || typeof document === "undefined") return;
     const form = document.getElementById("real-patient-form");
-    if (!form) return;
+    if (!form || form.dataset.patientEditor !== String(editor)) return;
     const read = id => form.querySelector("#" + id)?.value ?? "";
     draft = {
       editor,
@@ -48,6 +48,8 @@
     reset() { chosen = null; editor = null; filter = "active"; clearDraft(); },
     captureDraft,
     render(helpers) {
+      // app.js builds HTML before replacing it; snapshot the live form first.
+      captureDraft();
       const { head, I, esc, money, query } = helpers;
       const state = store()?.state || { rows: [], loading: false, busy: false, initialized: false, error: "Indisponível" };
       const row = state.rows.find(x => x.id === chosen);
@@ -70,7 +72,7 @@
         const options = ["Semanal","Quinzenal","Mensal","Avulsa"].map(x => "<option value='" + x + "'" + (x === cadence ? " selected" : "") + ">" + x + "</option>").join("");
         output += "<section class='card hcard real-patient-form'><div class='card-head'><h2>" + (editing ? "Editar paciente" : "Novo paciente") + "</h2><span class='status unlinked'>Privado</span></div>"
           + "<p class='subhead'>Informações administrativas do paciente. Data de nascimento, CPF e e-mail são opcionais e privados. Não inclua informações clínicas.</p>"
-          + "<form id='real-patient-form' class='patient-form-grid' autocomplete='off'>"
+          + "<form id='real-patient-form' data-patient-editor='" + esc(editor) + "' class='patient-form-grid' autocomplete='off'>"
           + "<label class='field patient-wide'>Nome do paciente<input id='real-patient-name' type='text' minlength='2' maxlength='120' required placeholder='Nome para identificação' value='" + esc(name) + "'></label>"
           + "<label class='field'>Valor por sessão (R$)<input id='real-patient-fee' type='text' inputmode='decimal' required placeholder='Ex.: 240,00' value='" + esc(fee) + "'></label>"
           + "<label class='field'>Frequência prevista<select id='real-patient-cadence'>" + options + "</select></label>"
