@@ -132,11 +132,22 @@ const store={
    },original.patientId,original.status,correct);
    if(!result.ok){toast(result.message);return true;}
    form=null;
-   await Promise.allSettled([
-    window.ConsultorioFinance?.reload(),
-    window.ConsultorioSessions?.loadPatientHistory(original.patientId)
+   // Ao salvar pelo botão geral "Registrar sessão manual", nenhum paciente
+   // estava selecionado. Abrir o paciente para mostrar o débito imediatamente.
+   const historyRequest=window.ConsultorioPatientsUI?.select(
+     original.patientId,render,{forceHistory:true}
+   )||window.ConsultorioSessions?.loadPatientHistory(original.patientId,true);
+   const outcomes=await Promise.allSettled([
+     window.ConsultorioFinance?.reload(),historyRequest
    ]);
-   toast(result.message);inform();return true;
+   const history=window.ConsultorioSessions?.state;
+   const finance=window.ConsultorioFinance?.state;
+   if(outcomes.some(x=>x.status==="rejected")||
+       (history?.historyPatientId===original.patientId&&history?.historyError)||
+       finance?.error){
+     toast("Sessão salva no Supabase, mas não foi possível atualizar toda a tela. Abra o paciente novamente para conferir.");
+   }else toast("Sessão salva e vinculada ao paciente. "+result.message);
+   inform();return true;
   }finally{busy=false;inform();}
  }
 };
