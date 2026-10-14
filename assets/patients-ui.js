@@ -112,7 +112,7 @@
           output+="<div class='notice orange' role='alert'>"+I("info")+"<div>"+esc(sessionState.historyError)+"</div></div>"
             +"<button class='btn sm' data-action='real-patient-history-reload' data-id='"+esc(row.id)+"'>Tentar novamente</button>";
         }else if(!sessionState.history.length){
-          output+="<div class='empty'>Nenhum atendimento registrado para este paciente. Confirme uma sessão na Agenda para iniciar o histórico.</div>";
+          output+="<div class='empty'>Nenhuma sessão confirmada ainda. Vincule o compromisso ao paciente na Agenda e, depois do atendimento, clique em Confirmar realizada e cobrar para criar o débito.</div>";
         }else{
           output+="<p class='real-patient-history-count'>Últimos "+sessionState.history.length+" atendimento"+(sessionState.history.length===1?"":"s")+
            " registrado"+(sessionState.history.length===1?"":"s")+".</p>";
